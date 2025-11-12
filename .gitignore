@@ -38,6 +38,7 @@ frontend/dist/
 frontend/.vite/
 frontend/.svelte-kit/
 frontend/.cache/
+*/package-lock.json
 
 # Svelte/Vite local files
 frontend/*.local
