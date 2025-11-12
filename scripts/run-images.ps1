@@ -16,6 +16,12 @@ if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
   exit 1
 }
 
+# Ensure Docker Desktop is running and in Linux engine
+$dockerCli = Join-Path $Env:ProgramFiles "Docker\Docker\DockerCli.exe"
+if (Test-Path $dockerCli) {
+  try { & $dockerCli -SwitchLinuxEngine | Out-Null } catch { }
+}
+
 function Start-DockerDesktop {
   try {
     $paths = @(
@@ -33,7 +39,7 @@ function Start-DockerDesktop {
   } catch { }
 }
 
-function Ensure-LinuxEngine {
+function Set-DockerLinuxEngine {
   # If server is up but in Windows-engine mode, switch
   try {
     $serverOs = docker info -f '{{.Server.Os}}' 2>$null
@@ -49,14 +55,14 @@ function Ensure-LinuxEngine {
 
 function Start-DockerIfNeeded {
   param([int]$TimeoutSec = 180)
-  try { docker info | Out-Null; Ensure-LinuxEngine; return $true } catch { }
+  try { docker info | Out-Null; Set-DockerLinuxEngine; return $true } catch { }
   Write-Info "Attempting to start Docker Desktop..."
   Start-DockerDesktop
   $deadline = (Get-Date).AddSeconds($TimeoutSec)
   while ((Get-Date) -lt $deadline) {
     try {
       docker info | Out-Null
-      Ensure-LinuxEngine
+      Set-DockerLinuxEngine
       # re-check pipe after switch
       docker info | Out-Null
       return $true
@@ -78,17 +84,36 @@ if (-not $Tag)        { $Tag = "latest" }
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
-# Prefer Git Bash -> run the same bash script
-$Bash = Get-Command bash -ErrorAction SilentlyContinue
-if ($Bash) {
+# Prefer Git Bash and run the shared bash launcher
+$GitBashPathCandidates = @(
+  (Join-Path $Env:ProgramFiles "Git\bin\bash.exe"),
+  (Join-Path ${Env:ProgramFiles(x86)} "Git\bin\bash.exe")
+)
+$GitBash = $null
+foreach ($p in $GitBashPathCandidates) { if (Test-Path $p) { $GitBash = $p; break } }
+if (-not $GitBash) {
+  $cmd = Get-Command bash -ErrorAction SilentlyContinue
+  if ($cmd) { $GitBash = $cmd.Source }
+}
+if ($GitBash) {
   Write-Info "Detected Bash. Delegating to scripts/run-images.sh..."
   function Convert-ToMsysPath([string]$winPath) {
-    if ($winPath -match '^[A-Za-z]:\\') { "/$($winPath.Substring(0,1).ToLower())/$($winPath.Substring(2).Replace('\','/'))" }
-    else { $winPath.Replace('\','/') }
+    if ($winPath -match '^[A-Za-z]:\\') {
+      $drive = $winPath.Substring(0,1).ToLower()
+      $rest  = $winPath.Substring(2).Replace('\','/')
+      return "/$drive/$rest"
+    }
+    return $winPath.Replace('\','/')
   }
-  $msysDir = Convert-ToMsysPath $ScriptDir
-  $cmd = "cd '$msysDir' && IMAGE_OWNER='$ImageOwner' TAG='$Tag' bash ./run-images.sh"
-  & $Bash -lc "$cmd"
+  $msysDir = Convert-ToMsysPath (Split-Path -Parent $MyInvocation.MyCommand.Path)
+  $envLine = ""
+  if ($ImageOwner) { $envLine += " IMAGE_OWNER='$ImageOwner'" }
+  if ($Tag)        { $envLine += " TAG='$Tag'" }
+  $cmd = @"
+cd '$msysDir'
+$envLine bash ./run-images.sh
+"@
+  & $GitBash -lc $cmd
   exit $LASTEXITCODE
 }
 
