@@ -1,4 +1,5 @@
 #!/usr/bin/env pwsh
+
 Param(
   [string]$ImageOwner = $env:IMAGE_OWNER,
   [string]$Tag = $env:TAG
@@ -7,77 +8,83 @@ Param(
 $ErrorActionPreference = "Stop"
 
 function Write-Info($msg) { Write-Host $msg }
-function Write-Err($msg) { Write-Host $msg -ForegroundColor Red }
+function Write-Err($msg)  { Write-Host $msg -ForegroundColor Red }
 
-# Ensure Docker is available
+# Ensure docker CLI exists
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
-  Write-Err "Docker is not installed or not in PATH. Please install Docker Desktop and retry."
+  Write-Err "Docker is not installed or not in PATH. Install Docker Desktop and retry."
   exit 1
 }
 
 function Start-DockerDesktop {
   try {
     $paths = @(
-      Join-Path $Env:ProgramFiles "Docker\Docker\Docker Desktop.exe"),
+      (Join-Path $Env:ProgramFiles        "Docker\Docker\Docker Desktop.exe"),
       (Join-Path ${Env:ProgramFiles(x86)} "Docker\Docker\Docker Desktop.exe")
+    )
     foreach ($p in $paths) {
       if ($p -and (Test-Path $p)) {
         Start-Process -FilePath $p | Out-Null
         return
       }
     }
-    # Fallback by app name (if registered)
+    # Fallback by app name
     Start-Process -FilePath "Docker Desktop" -ErrorAction SilentlyContinue | Out-Null
-  } catch {
-    # ignore
-  }
+  } catch { }
+}
+
+function Ensure-LinuxEngine {
+  # If server is up but in Windows-engine mode, switch
+  try {
+    $serverOs = docker info -f '{{.Server.Os}}' 2>$null
+    if ($serverOs -and $serverOs -ne 'linux') {
+      Write-Info "Switching Docker Desktop to Linux engine..."
+      $cli = Join-Path $Env:ProgramFiles "Docker\Docker\DockerCli.exe"
+      if (Test-Path $cli) {
+        & $cli -SwitchLinuxEngine | Out-Null
+      }
+    }
+  } catch { }
 }
 
 function Start-DockerIfNeeded {
-  param([int]$TimeoutSec = 120)
-  try {
-    docker info | Out-Null
-    return $true
-  } catch {
-    Write-Info "Attempting to start Docker Desktop..."
-    Start-DockerDesktop
-    $deadline = (Get-Date).AddSeconds($TimeoutSec)
-    while ((Get-Date) -lt $deadline) {
-      try {
-        docker info | Out-Null
-        return $true
-      } catch {
-        Start-Sleep -Seconds 2
-      }
+  param([int]$TimeoutSec = 180)
+  try { docker info | Out-Null; Ensure-LinuxEngine; return $true } catch { }
+  Write-Info "Attempting to start Docker Desktop..."
+  Start-DockerDesktop
+  $deadline = (Get-Date).AddSeconds($TimeoutSec)
+  while ((Get-Date) -lt $deadline) {
+    try {
+      docker info | Out-Null
+      Ensure-LinuxEngine
+      # re-check pipe after switch
+      docker info | Out-Null
+      return $true
+    } catch {
+      Start-Sleep -Seconds 2
     }
-    return $false
   }
+  return $false
 }
 
-if (-not (Start-DockerIfNeeded -TimeoutSec 120)) {
+if (-not (Start-DockerIfNeeded -TimeoutSec 180)) {
   Write-Err "Docker daemon not running. Start Docker Desktop and retry."
   exit 1
 }
 
 # Defaults
 if (-not $ImageOwner) { $ImageOwner = "tarekchaalan" }
-if (-not $Tag) { $Tag = "latest" }
+if (-not $Tag)        { $Tag = "latest" }
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
-
-# Try to run the Bash script if available (Git Bash)
+# Prefer Git Bash -> run the same bash script
 $Bash = Get-Command bash -ErrorAction SilentlyContinue
 if ($Bash) {
   Write-Info "Detected Bash. Delegating to scripts/run-images.sh..."
-  # Convert Windows path to a Git Bash/MSYS-friendly path and invoke via login shell
   function Convert-ToMsysPath([string]$winPath) {
-    if ($winPath -match '^[A-Za-z]:\\') {
-      $drive = $winPath.Substring(0,1).ToLower()
-      $rest = $winPath.Substring(2).Replace('\','/')
-      return "/$drive/$rest"
-    }
-    return $winPath.Replace('\','/')
+    if ($winPath -match '^[A-Za-z]:\\') { "/$($winPath.Substring(0,1).ToLower())/$($winPath.Substring(2).Replace('\','/'))" }
+    else { $winPath.Replace('\','/') }
   }
   $msysDir = Convert-ToMsysPath $ScriptDir
   $cmd = "cd '$msysDir' && IMAGE_OWNER='$ImageOwner' TAG='$Tag' bash ./run-images.sh"
@@ -85,29 +92,22 @@ if ($Bash) {
   exit $LASTEXITCODE
 }
 
-# Try WSL
+# Fallback: WSL
 $WSL = Get-Command wsl.exe -ErrorAction SilentlyContinue
 if ($WSL) {
   Write-Info "No Bash found in PATH. Falling back to WSL..."
   $winPath = Join-Path $ScriptDir "run-images.sh"
-  # Convert to WSL path
   $wslPath = & wsl.exe wslpath -a "$winPath"
-  if (-not $wslPath) {
-    Write-Err "Failed to convert path to WSL path."
-    exit 1
-  }
-  $wslDir = & wsl.exe dirname "$wslPath"
-  # Build env prefix for WSL
-  $envPrefix = ""
-  if ($ImageOwner) { $envPrefix += " IMAGE_OWNER='$ImageOwner'" }
-  if ($Tag) { $envPrefix += " TAG='$Tag'" }
-  $cmd = "cd '$wslDir' &&$envPrefix bash ./run-images.sh"
+  if (-not $wslPath) { Write-Err "Failed to convert path to WSL path."; exit 1 }
+  $wslDir  = & wsl.exe dirname "$wslPath"
+  $envPref = ""
+  if ($ImageOwner) { $envPref += " IMAGE_OWNER='$ImageOwner'" }
+  if ($Tag)        { $envPref += " TAG='$Tag'" }
+  $cmd = "cd '$wslDir' &&$envPref bash ./run-images.sh"
   & wsl.exe bash -lc "$cmd"
   exit $LASTEXITCODE
 }
 
 Write-Err "Neither Git Bash (bash) nor WSL was found."
-Write-Host "Install Git for Windows (which includes Git Bash) or WSL, then retry." -ForegroundColor Yellow
+Write-Host "Install Git for Windows (with Git Bash) or enable WSL, then retry." -ForegroundColor Yellow
 exit 1
-
-
