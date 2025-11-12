@@ -192,9 +192,28 @@ download_stockfish_linux() {
   info "Downloading Stockfish (Linux) into ./stockfish via temporary Ubuntu container..."
   mkdir -p "${ROOT_DIR}/stockfish"
   # Use an Ubuntu container to install stockfish and copy the binary to host
-  if ! docker run --rm -v "${ROOT_DIR}/stockfish:/out" ubuntu:22.04 bash -lc "set -euo pipefail; apt-get update >/dev/null; DEBIAN_FRONTEND=noninteractive apt-get install -y stockfish >/dev/null; cp /usr/games/stockfish /out/stockfish_binary; chmod +x /out/stockfish_binary"; then
+  if ! docker run --rm -v "${ROOT_DIR}/stockfish:/out" ubuntu:22.04 bash -lc "set -euo pipefail; mkdir -p /out; apt-get update >/dev/null; DEBIAN_FRONTEND=noninteractive apt-get install -y stockfish >/dev/null; cp /usr/games/stockfish /out/stockfish_binary; chmod +x /out/stockfish_binary"; then
     err "Failed to obtain Stockfish via Ubuntu container."
     err "You can try manually placing a Linux stockfish binary at: ${ROOT_DIR}/stockfish/stockfish_binary"
+    return 1
+  fi
+
+  # If file not present, on Windows Git Bash the POSIX path may not have been accepted by Docker.
+  # Retry once with a Windows-style path for the bind mount.
+  if [ ! -f "${ROOT_DIR}/stockfish/stockfish_binary" ] && [ "$OS" = "Windows" ]; then
+    p="${ROOT_DIR}/stockfish"
+    if [[ "$p" =~ ^/([a-zA-Z])/(.*)$ ]]; then
+      drv="${BASH_REMATCH[1]}"
+      rest="${BASH_REMATCH[2]}"
+      winp="$(tr '[:lower:]' '[:upper:]' <<<"$drv"):/$(printf "%s" "$rest")"
+      info "Retrying Stockfish download with Windows path for Docker: ${winp}"
+      docker run --rm -v "${winp}:/out" ubuntu:22.04 bash -lc "set -euo pipefail; mkdir -p /out; apt-get update >/dev/null; DEBIAN_FRONTEND=noninteractive apt-get install -y stockfish >/dev/null; cp /usr/games/stockfish /out/stockfish_binary; chmod +x /out/stockfish_binary" >/dev/null 2>&1 || true
+    fi
+  fi
+
+  if [ ! -f "${ROOT_DIR}/stockfish/stockfish_binary" ]; then
+    err "Stockfish download did not materialize at: ${ROOT_DIR}/stockfish/stockfish_binary"
+    err "Docker Desktop may be unable to bind-mount this path. Ensure drive C: is shared in Docker Desktop and rerun, or place the binary manually."
     return 1
   fi
   info "Stockfish saved to ${ROOT_DIR}/stockfish/stockfish_binary"
