@@ -141,7 +141,7 @@ ensure_docker_running() {
       # If running under Git Bash/MinGW, attempt PowerShell launch
       if command -v powershell.exe >/dev/null 2>&1; then
         info "Attempting to start Docker Desktop via PowerShell..."
-        powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath \"$Env:ProgramFiles\Docker\Docker\Docker Desktop.exe\"" >/dev/null 2>&1 || true
+        powershell.exe -NoProfile -ExecutionPolicy Bypass -Command 'Start-Process -FilePath "$Env:ProgramFiles\Docker\Docker\Docker Desktop.exe"' >/dev/null 2>&1 || true
       fi
       ;;
     Linux)
