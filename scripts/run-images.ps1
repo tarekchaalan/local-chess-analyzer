@@ -33,7 +33,7 @@ function Start-DockerDesktop {
   }
 }
 
-function Ensure-Docker {
+function Start-DockerIfNeeded {
   param([int]$TimeoutSec = 120)
   try {
     docker info | Out-Null
@@ -54,7 +54,7 @@ function Ensure-Docker {
   }
 }
 
-if (-not (Ensure-Docker -TimeoutSec 120)) {
+if (-not (Start-DockerIfNeeded -TimeoutSec 120)) {
   Write-Err "Docker daemon not running. Start Docker Desktop and retry."
   exit 1
 }
@@ -64,7 +64,7 @@ if (-not $ImageOwner) { $ImageOwner = "tarekchaalan" }
 if (-not $Tag) { $Tag = "latest" }
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$RepoRoot = (Resolve-Path (Join-Path $ScriptDir "..")).Path
+
 
 # Try to run the Bash script if available (Git Bash)
 $Bash = Get-Command bash -ErrorAction SilentlyContinue
