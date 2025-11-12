@@ -55,16 +55,16 @@ function Set-DockerLinuxEngine {
 
 function Start-DockerIfNeeded {
   param([int]$TimeoutSec = 180)
-  try { docker info | Out-Null; Set-DockerLinuxEngine; return $true } catch { }
+  try { docker info 2>$null | Out-Null; Set-DockerLinuxEngine; return $true } catch { }
   Write-Info "Attempting to start Docker Desktop..."
   Start-DockerDesktop
   $deadline = (Get-Date).AddSeconds($TimeoutSec)
   while ((Get-Date) -lt $deadline) {
     try {
-      docker info | Out-Null
+      docker info 2>$null | Out-Null
       Set-DockerLinuxEngine
       # re-check pipe after switch
-      docker info | Out-Null
+      docker info 2>$null | Out-Null
       return $true
     } catch {
       Start-Sleep -Seconds 2
