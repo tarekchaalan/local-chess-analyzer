@@ -70,11 +70,18 @@ $RepoRoot = (Resolve-Path (Join-Path $ScriptDir "..")).Path
 $Bash = Get-Command bash -ErrorAction SilentlyContinue
 if ($Bash) {
   Write-Info "Detected Bash. Delegating to scripts/run-images.sh..."
-  # Propagate relevant env
-  $env:IMAGE_OWNER = $ImageOwner
-  $env:TAG = $Tag
-  # Call bash with Windows path; bash usually handles it fine
-  & $Bash (Join-Path $ScriptDir "run-images.sh")
+  # Convert Windows path to a Git Bash/MSYS-friendly path and invoke via login shell
+  function Convert-ToMsysPath([string]$winPath) {
+    if ($winPath -match '^[A-Za-z]:\\') {
+      $drive = $winPath.Substring(0,1).ToLower()
+      $rest = $winPath.Substring(2).Replace('\','/')
+      return "/$drive/$rest"
+    }
+    return $winPath.Replace('\','/')
+  }
+  $msysDir = Convert-ToMsysPath $ScriptDir
+  $cmd = "cd '$msysDir' && IMAGE_OWNER='$ImageOwner' TAG='$Tag' bash ./run-images.sh"
+  & $Bash -lc "$cmd"
   exit $LASTEXITCODE
 }
 
