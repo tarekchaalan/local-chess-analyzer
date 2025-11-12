@@ -268,7 +268,7 @@ if [[ ! -f "${STOCKFISH_BIN}" ]]; then
   fi
 fi
 
-if [[ -f "${STOCKFISH_BIN}" && -x "${STOCKFISH_BIN}" ]]; then
+if [[ -f "${STOCKFISH_BIN}" ]]; then
   STOCKFISH_VOLUME="      - \"${ROOT_DIR}/stockfish:/app/stockfish:ro\""
 else
   STOCKFISH_VOLUME=""
@@ -364,6 +364,9 @@ if ! ${COMPOSE} -f "${COMPOSE_FILE}" up -d; then
   err "Check for port conflicts, missing privileges, or incompatible Docker versions."
   exit 1
 fi
+
+# Best-effort: ensure stockfish is executable inside container if mounted
+docker exec lca-backend bash -lc 'if [ -f /app/stockfish/stockfish_binary ]; then chmod +x /app/stockfish/stockfish_binary || true; fi' >/dev/null 2>&1 || true
 
 #######################################
 # Health + Reachability checks
