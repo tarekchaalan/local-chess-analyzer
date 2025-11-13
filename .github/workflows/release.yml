@@ -15,6 +15,10 @@ jobs:
     outputs:
       tag: ${{ steps.vars.outputs.tag }}
     steps:
+      - name: Checkout repository (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Derive next semantic version tag
         id: vars
         run: |
