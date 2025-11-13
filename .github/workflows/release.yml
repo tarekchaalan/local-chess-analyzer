@@ -106,23 +106,14 @@ jobs:
           Follow these steps once to allow it to run normally.
 
           =========================
-          Phase 1 – Allow the App
+          Remove Quarantine
           =========================
-          1) Double-click “LocalChessAnalyzer”.
-          2) macOS will show a security warning. Click “Cancel” or “Done”.
-          3) Open 'System Settings'.
-          4) Go to 'Privacy & Security' in the left sidebar.
-          5) Scroll down until you see a message saying “LocalChessAnalyzer was blocked”.
-          6) Click 'Open Anyway'.
 
-          =========================
-          Phase 2 – Remove Quarantine
-          =========================
           Do this once. It tells macOS the app is safe so it won’t block any internal files.
           1) Right-click the 'LocalChessAnalyzer' folder.
           2) Select 'New Terminal at Folder' (or open a Terminal manually and navigate here).
           3) Run this command:
-             cd .. && xattr -dr com.apple.quarantine LocalChessAnalyzer
+            cd .. && xattr -dr com.apple.quarantine LocalChessAnalyzer
 
           =========================
           All Done!
@@ -169,23 +160,14 @@ jobs:
           Follow these steps once to allow it to run normally.
 
           =========================
-          Phase 1 – Allow the App
+          Remove Quarantine
           =========================
-          1) Double-click “LocalChessAnalyzer”.
-          2) macOS will show a security warning. Click “Cancel” or “Done”.
-          3) Open 'System Settings'.
-          4) Go to 'Privacy & Security' in the left sidebar.
-          5) Scroll down until you see a message saying “LocalChessAnalyzer was blocked”.
-          6) Click 'Open Anyway'.
 
-          =========================
-          Phase 2 – Remove Quarantine
-          =========================
           Do this once. It tells macOS the app is safe so it won’t block any internal files.
           1) Right-click the 'LocalChessAnalyzer' folder.
           2) Select 'New Terminal at Folder' (or open a Terminal manually and navigate here).
           3) Run this command:
-             cd .. && xattr -dr com.apple.quarantine LocalChessAnalyzer
+            cd .. && xattr -dr com.apple.quarantine LocalChessAnalyzer
 
           =========================
           All Done!
