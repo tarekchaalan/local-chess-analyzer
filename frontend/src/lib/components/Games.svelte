@@ -30,7 +30,6 @@
   let pageAnalysisProgress = 0;
   let pageAnalysisTotal = 0;
   let pageAnalysisError = null;
-  let showGatekeeperNotice = false; // persistent macOS Gatekeeper note until a single analysis succeeds
 
   // Derived flags for UX
   $: isAnalysisInProgress = analyzingPage || (analyzingGames && analyzingGames.size > 0);
@@ -40,17 +39,6 @@
   $: totalPages = Math.ceil(total / pageSize);
   $: skip = currentPage * pageSize;
 
-  // Apply client-side result filter only. Text search is now server-side.
-  // Initialize persistent Gatekeeper note visibility (macOS only)
-  onMount(() => {
-    try {
-      const cleared = window.localStorage.getItem('gatekeeperNoticeCleared') === 'true';
-      const isMac = /Mac|macOS|Macintosh/i.test(navigator.userAgent || '');
-      showGatekeeperNotice = isMac && !cleared;
-    } catch {
-      showGatekeeperNotice = false;
-    }
-  });
   // Apply client-side result filter only. Text search is now server-side.
   $: displayedGames = games.filter(game => {
     if (resultFilter !== 'all' && playerName.trim()) {
@@ -299,10 +287,6 @@
         : (result?.status === 'already_completed' ? 'Already analyzed.' : 'Analysis completed.');
       syncSuccess = `Game analyzed successfully! ${movesMsg}`;
       // Permanently dismiss Gatekeeper notice after first successful single analysis
-      try {
-        window.localStorage.setItem('gatekeeperNoticeCleared', 'true');
-        showGatekeeperNotice = false;
-      } catch {}
       setTimeout(() => syncSuccess = null, 5000);
     } catch (err) {
       console.error('[Games] Analysis failed:', err);
@@ -502,13 +486,6 @@
       {/if}
     </div>
   </div>
-
-  <!-- Small, persistent macOS Gatekeeper note -->
-  {#if showGatekeeperNotice}
-    <div style="font-size: 12px; color: #b00020; margin: 8px 0;">
-      macOS blocked Stockfish. Go to System Settings → Privacy & Security → scroll to the bottom → press ‘Open Anyway’, then run the analysis. Mac problem not mine.
-    </div>
-  {/if}
 
   <!-- Sync feedback messages -->
   {#if syncSuccess}
