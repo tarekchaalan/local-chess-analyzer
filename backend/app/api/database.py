@@ -5,13 +5,15 @@ from sqlalchemy import text
 import shutil
 import os
 from pathlib import Path
+import tempfile
 
 from ..db.database import get_db_session, engine, Base
+from ..paths import data_dir, stockfish_binary_path
 
 router = APIRouter()
 
-DATABASE_PATH = "/app/data/games.db"
-BACKUP_PATH = "/app/data/games_backup.db"
+DATABASE_PATH = str(data_dir() / "games.db")
+BACKUP_PATH = str(data_dir() / "games_backup.db")
 
 
 @router.post("/api/database/initialize")
@@ -26,11 +28,8 @@ async def initialize_database():
     """
     try:
         # Ensure data directory exists
-        data_dir = "/app/data"
-        if not os.path.exists(data_dir):
-            os.makedirs(data_dir, mode=0o777, exist_ok=True)
-        else:
-            os.chmod(data_dir, 0o777)
+        _d = data_dir()
+        _d.mkdir(parents=True, exist_ok=True)
 
         # Close all connections
         await engine.dispose()
@@ -41,7 +40,10 @@ async def initialize_database():
 
             # Initialize default settings
             await conn.execute(text("INSERT OR IGNORE INTO settings (key, value) VALUES ('chess_com_username', NULL)"))
-            await conn.execute(text("INSERT OR IGNORE INTO settings (key, value) VALUES ('stockfish_path', '/app/stockfish/stockfish_binary')"))
+            await conn.execute(
+                text("INSERT OR IGNORE INTO settings (key, value) VALUES ('stockfish_path', :sf)"),
+                {"sf": str(stockfish_binary_path())}
+            )
             await conn.execute(text("INSERT OR IGNORE INTO settings (key, value) VALUES ('stockfish_threads', '1')"))
             await conn.execute(text("INSERT OR IGNORE INTO settings (key, value) VALUES ('stockfish_hash_mb', '128')"))
             await conn.execute(text("INSERT OR IGNORE INTO settings (key, value) VALUES ('analysis_depth', '15')"))
@@ -134,7 +136,8 @@ async def download_database():
         filename = f"games_backup_{timestamp}.db"
 
         # Create a temporary copy to avoid any caching issues
-        temp_path = f"/tmp/games_download_{unique_id}.db"
+        temp_dir = tempfile.gettempdir()
+        temp_path = os.path.join(temp_dir, f"games_download_{unique_id}.db")
         shutil.copy2(DATABASE_PATH, temp_path)
 
         # Return the temp file and mark it for deletion after sending

@@ -632,6 +632,18 @@ Build local-chess-analyzer from the source and install dependencies:
 
 Run the project with:
 
+**Desktop app (recommended)**
+
+- Download from Releases:
+  - macOS Apple Silicon: [`LocalChessAnalyzer-macOS-AppleSilicon.zip`](https://github.com/tarekchaalan/local-chess-analyzer/releases)
+  - macOS Intel: [`LocalChessAnalyzer-macOS-Intel.zip`](https://github.com/tarekchaalan/local-chess-analyzer/releases)
+  - Windows: [`LocalChessAnalyzer-Windows.zip`](https://github.com/tarekchaalan/local-chess-analyzer/releases)
+  - Linux: [`LocalChessAnalyzer-Linux.zip`](https://github.com/tarekchaalan/local-chess-analyzer/releases)
+- Unzip and run the `LocalChessAnalyzer` executable.
+- macOS Gatekeeper: if blocked, open System Settings → Privacy & Security → scroll to the bottom → Open Anyway. Then retry analysis. After a successful single analysis, the notice will be hidden permanently.
+- Data lives in `data/` in `_internal` (SQLite and analysis files).
+- Stockfish is bundled for your platform and auto-detected at runtime.
+
 **Using [docker](https://www.docker.com/):**
 ```sh
 docker compose -f docker-compose.yml up --build

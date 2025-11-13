@@ -1,104 +1,243 @@
-name: release-bundles
+name: Release desktop bundles
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
-  build-and-upload:
+  prepare_release:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.vars.outputs.tag }}
+    steps:
+      - name: Derive next semantic version tag
+        id: vars
+        run: |
+          set -euo pipefail
+          git fetch --tags --quiet || true
+          # Allow forcing a version via commit subject: "release: vX.Y.Z" or "version: vX.Y.Z"
+          FORCE_TAG="$(git log -1 --pretty=%s | sed -nE 's/.*(release|version):[[:space:]]*(v[0-9]+\.[0-9]+\.[0-9]+).*/\2/ip')"
+          if [ -n "${FORCE_TAG:-}" ]; then
+            TAG="$(echo "$FORCE_TAG" | head -n1 | tr -d '[:space:]')"
+            echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Get latest semver tag (vX.Y.Z); default to v0.0.0
+          LATEST="$(git tag --list 'v*' --sort=-version:refname | head -n1 || true)"
+          if [ -z "$LATEST" ]; then
+            LATEST="v0.0.0"
+          fi
+          echo "Latest tag: $LATEST"
+          COMMITS="$(git log "${LATEST}..HEAD" --pretty=%s%n%b || true)"
+          # Determine bump type using Conventional Commits + overrides
+          BUMP="patch"
+          if echo "$COMMITS" | grep -Eiq '(^|\n)(BREAKING CHANGE:|.*!:)'; then
+            BUMP="major"
+          elif echo "$COMMITS" | grep -Eiq '(^|\n)feat(\(|:)|(^|\n)\[minor\]|(^|\n)semver:\s*minor'; then
+            BUMP="minor"
+          elif echo "$COMMITS" | grep -Eiq '(^|\n)\[major\]|(^|\n)semver:\s*major'; then
+            BUMP="major"
+          elif echo "$COMMITS" | grep -Eiq '(^|\n)\[patch\]|(^|\n)semver:\s*patch'; then
+            BUMP="patch"
+          elif echo "$COMMITS" | grep -Eiq '(^|\n)fix(\(|:)|(^|\n)perf(\(|:)|(^|\n)refactor(\(|:)'; then
+            BUMP="patch"
+          fi
+          # If no previous tag (v0.0.0), start at v1.0.0
+          if [ "$LATEST" = "v0.0.0" ]; then
+            NEXT="v1.0.0"
+          else
+            MAJOR=$(echo "$LATEST" | sed -E 's/^v([0-9]+)\..*/\1/')
+            MINOR=$(echo "$LATEST" | sed -E 's/^v[0-9]+\.([0-9]+)\..*/\1/')
+            PATCH=$(echo "$LATEST" | sed -E 's/^v[0-9]+\.[0-9]+\.([0-9]+)/\1/')
+            case "$BUMP" in
+              major) MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0 ;;
+              minor) MINOR=$((MINOR+1)); PATCH=0 ;;
+              patch) PATCH=$((PATCH+1)) ;;
+            esac
+            NEXT="v${MAJOR}.${MINOR}.${PATCH}"
+          fi
+          echo "tag=${NEXT}" >> "$GITHUB_OUTPUT"
+      - name: Create Git tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "${{ steps.vars.outputs.tag }}"
+          git push origin "${{ steps.vars.outputs.tag }}"
+
+  build_macos_silicon:
+    needs: prepare_release
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+      - name: Install backend deps and PyInstaller
+        run: |
+          python -m pip install -r backend/requirements.txt
+          python -m pip install pyinstaller
+      - name: Keep only Apple Silicon stockfish binary
+        run: |
+          find stockfish -maxdepth 1 -type f -name 'stockfish_*' ! -name 'stockfish_macos_silicon' -delete
+          chmod +x stockfish/stockfish_macos_silicon || true
+      - name: Build macOS bundle
+        run: |
+          pyinstaller --clean --noconfirm pyinstaller.spec
+          cd dist
+          zip -r LocalChessAnalyzer-macOS-AppleSilicon.zip LocalChessAnalyzer
+      - name: Upload macOS (Apple Silicon) artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LocalChessAnalyzer-macOS-AppleSilicon.zip
+          path: dist/LocalChessAnalyzer-macOS-AppleSilicon.zip
+
+  build_macos_intel:
+    needs: prepare_release
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+      - name: Install backend deps and PyInstaller
+        run: |
+          python -m pip install -r backend/requirements.txt
+          python -m pip install pyinstaller
+      - name: Keep only Intel (BMI2) stockfish binary
+        run: |
+          find stockfish -maxdepth 1 -type f -name 'stockfish_*' ! -name 'stockfish_macos_intel' -delete
+          chmod +x stockfish/stockfish_macos_intel || true
+      - name: Build macOS bundle (Intel)
+        run: |
+          pyinstaller --clean --noconfirm pyinstaller.spec
+          cd dist
+          zip -r LocalChessAnalyzer-macOS-Intel.zip LocalChessAnalyzer
+      - name: Upload macOS (Intel) artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LocalChessAnalyzer-macOS-Intel.zip
+          path: dist/LocalChessAnalyzer-macOS-Intel.zip
+
+  build_windows:
+    needs: prepare_release
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build frontend
+        shell: pwsh
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+      - name: Install backend deps and PyInstaller
+        shell: pwsh
+        run: |
+          python -m pip install -r backend/requirements.txt
+          python -m pip install pyinstaller
+      - name: Keep only Windows stockfish binary
+        shell: pwsh
+        run: |
+          Get-ChildItem -Path stockfish -File | Where-Object { $_.Name -ne 'stockfish_windows.exe' } | Remove-Item -Force
+      - name: Build Windows bundle
+        shell: pwsh
+        run: |
+          pyinstaller --clean --noconfirm pyinstaller.spec
+          cd dist
+          Compress-Archive -Path LocalChessAnalyzer -DestinationPath LocalChessAnalyzer-Windows.zip
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LocalChessAnalyzer-Windows.zip
+          path: dist/LocalChessAnalyzer-Windows.zip
+
+  build_linux:
+    needs: prepare_release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Prepare macOS bundle
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build frontend
         run: |
-          mkdir -p dist/macos/scripts
-          cp -a scripts/run-images.sh dist/macos/scripts/
-          cat > dist/macos/README-FIRST.txt <<'TXT'
-          How to open on macOS (unsigned download)
-
-          Because this app is not signed/notarized with Apple, macOS Gatekeeper may block the first run.
-
-          Easiest (may not work):
-          1) Control-click "Run-LCA.command"
-          2) Click "Open"
-          3) Click "Open" again
-
-          Or: System Settings → Privacy & Security → Scroll to the bottom to find "Run-LCA.command was blocked" → Open Anyway → Open Anyway.
-
-          Terminal alternative (removes quarantine attribute):
-          1) cd into the unzipped folder
-          2) chmod +x "Run-LCA.command"
-          3) xattr -dr com.apple.quarantine "Run-LCA.command" scripts
-          4) open "Run-LCA.command"
-
-          Requirements:
-          - Docker Desktop installed and allowed to run.
-          TXT
-          cat > dist/macos/Run-LCA.command <<'SH'
-          #!/bin/bash
-          set -euo pipefail
-          cd "$(dirname "$0")"
-          chmod +x "./scripts/run-images.sh"
-          bash "./scripts/run-images.sh"
-          read -r -p "Press Return to close..."
-          SH
-          chmod +x dist/macos/Run-LCA.command
-          (cd dist && zip -r LCA-macOS.zip macos)
-
-      - name: Prepare Windows bundle
+          cd frontend
+          npm ci
+          npm run build
+      - name: Install backend deps and PyInstaller
         run: |
-          mkdir -p dist/windows/scripts
-          cp -a scripts/run-images.ps1 dist/windows/scripts/
-          # Also include bash script so Git Bash users can run directly if desired
-          cp -a scripts/run-images.sh dist/windows/scripts/
-          cat > dist/windows/README-FIRST.txt <<'TXT'
-          How to open on Windows (unsigned download)
-
-          SmartScreen may show "Windows protected your PC".
-
-          Easiest:
-          1) Right-click the zip → Properties → Unblock (if present) → OK
-          2) Unzip
-          3) Double-click "Run-LCA.bat"
-          4) If SmartScreen appears, click "More info" → "Run anyway"
-
-          PowerShell policy:
-          - The launcher uses a PowerShell script internally. If your policy blocks scripts,
-            the BAT will still attempt to run it by setting an execution policy for the process only.
-
-          Requirements:
-          - Docker Desktop installed and allowed to run.
-          TXT
-          cat > dist/windows/Run-LCA.bat <<'BAT'
-          @echo off
-          powershell -ExecutionPolicy Bypass -File "%~dp0scripts\run-images.ps1"
-          pause
-          BAT
-          (cd dist && zip -r LCA-Windows.zip windows)
-
-      - name: Checksums
+          python -m pip install -r backend/requirements.txt
+          python -m pip install pyinstaller
+      - name: Keep only Linux stockfish binary
         run: |
+          find stockfish -maxdepth 1 -type f -name 'stockfish_*' ! -name 'stockfish_linux' -delete
+          chmod +x stockfish/stockfish_linux || true
+      - name: Build Linux bundle
+        run: |
+          pyinstaller --clean --noconfirm pyinstaller.spec
           cd dist
-          (sha256sum LCA-*.zip > SHA256SUMS.txt) || (shasum -a 256 LCA-*.zip > SHA256SUMS.txt)
+          zip -r LocalChessAnalyzer-Linux.zip LocalChessAnalyzer
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LocalChessAnalyzer-Linux.zip
+          path: dist/LocalChessAnalyzer-Linux.zip
 
+  publish_release:
+    needs: [prepare_release, build_macos_silicon, build_macos_intel, build_windows, build_linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-bundles
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ needs.prepare_release.outputs.tag }}
+          name: Local Chess Analyzer ${{ needs.prepare_release.outputs.tag }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
           files: |
-            dist/LCA-macOS.zip
-            dist/LCA-Windows.zip
-            dist/SHA256SUMS.txt
+            release-bundles/LocalChessAnalyzer-macOS-AppleSilicon.zip/LocalChessAnalyzer-macOS-AppleSilicon.zip
+            release-bundles/LocalChessAnalyzer-macOS-Intel.zip/LocalChessAnalyzer-macOS-Intel.zip
+            release-bundles/LocalChessAnalyzer-Windows.zip/LocalChessAnalyzer-Windows.zip
+            release-bundles/LocalChessAnalyzer-Linux.zip/LocalChessAnalyzer-Linux.zip
           body: |
-            Quick start
-            - macOS: unzip LCA-macOS.zip and double‑click Run-LCA.command. If blocked, Control‑click → Open, or see README-FIRST.txt (xattr instructions included).
-            - Windows: unzip LCA-Windows.zip and double‑click Run-LCA.bat. If SmartScreen appears, click More info → Run anyway. See README-FIRST.txt for details.
-
-            Requirements
-            - Docker Desktop installed and running (the launcher will try to start it if possible).
-
-            What it does
-            - Starts backend and frontend Docker images locally, waits for health checks, and opens the app in your default browser.
+            Download and run:
+            - macOS (Apple Silicon): unzip LocalChessAnalyzer-macOS-AppleSilicon.zip, open the LocalChessAnalyzer executable. If blocked by Gatekeeper, System Settings → Privacy & Security → Open Anyway.
+            - macOS (Intel): unzip LocalChessAnalyzer-macOS-Intel.zip, open the LocalChessAnalyzer executable. If blocked by Gatekeeper, System Settings → Privacy & Security → Open Anyway.
+            - Windows: unzip LocalChessAnalyzer-Windows.zip, double‑click LocalChessAnalyzer.exe.
+            - Linux: unzip LocalChessAnalyzer-Linux.zip, run ./LocalChessAnalyzer (chmod +x if needed).
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

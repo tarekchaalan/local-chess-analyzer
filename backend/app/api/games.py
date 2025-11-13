@@ -7,7 +7,7 @@ import asyncio
 from io import StringIO
 import chess.pgn
 
-from ..db.database import get_db_session
+from ..db.database import get_db_session, async_session
 from ..crud import games as crud_games
 from ..db.models import Game
 from ..services.stockfish_service import (
@@ -15,7 +15,6 @@ from ..services.stockfish_service import (
     get_game_analysis,
     has_game_analysis
 )
-from ..db.database import async_session
 
 
 router = APIRouter()
