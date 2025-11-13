@@ -10,6 +10,7 @@ import io
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from ..db.models import Setting
+from ..paths import stockfish_binary_path, data_dir as resolve_data_dir
 from math import exp
 
 
@@ -23,9 +24,9 @@ async def get_stockfish_settings(db: AsyncSession) -> Dict[str, Any]:
     Returns:
         Dictionary with Stockfish settings
     """
-    # Define default values
+    # Define default values (resolved at runtime)
     defaults = {
-        "stockfish_path": "/app/stockfish/stockfish_binary",
+        "stockfish_path": str(stockfish_binary_path()),
         "stockfish_threads": "4",
         "stockfish_hash": "512",
         "analysis_depth": "20",
@@ -42,10 +43,14 @@ async def get_stockfish_settings(db: AsyncSession) -> Dict[str, Any]:
         settings[row.key] = row.value
 
     # Merge with defaults (use DB values if available, otherwise defaults)
+    # Accept either 'stockfish_hash' or 'stockfish_hash_mb' from DB for compatibility
+    stockfish_hash_db = settings.get("stockfish_hash")
+    if stockfish_hash_db is None and "stockfish_hash_mb" in settings:
+        stockfish_hash_db = settings["stockfish_hash_mb"]
     final_settings = {
         "stockfish_path": settings.get("stockfish_path", defaults["stockfish_path"]),
         "stockfish_threads": int(settings.get("stockfish_threads", defaults["stockfish_threads"])),
-        "stockfish_hash": int(settings.get("stockfish_hash", defaults["stockfish_hash"])),
+        "stockfish_hash": int(stockfish_hash_db or defaults["stockfish_hash"]),
         "analysis_depth": int(settings.get("analysis_depth", defaults["analysis_depth"])),
         "analysis_time_ms": int(settings.get("analysis_time_ms", defaults["analysis_time_ms"]))
     }
@@ -61,7 +66,7 @@ class StockfishAnalyzer:
 
     def __init__(
         self,
-        stockfish_path: str = "/app/stockfish/stockfish_binary",
+        stockfish_path: str = None,
         threads: int = 4,
         hash_mb: int = 512,
         depth: int = 20,
@@ -77,7 +82,7 @@ class StockfishAnalyzer:
             depth: Search depth
             time_ms: Time per move in milliseconds
         """
-        self.stockfish_path = stockfish_path
+        self.stockfish_path = stockfish_path or str(stockfish_binary_path())
         self.threads = threads
         self.hash_mb = hash_mb
         self.depth = depth
@@ -474,7 +479,7 @@ async def analyze_game_async(
     game_id: int,
     pgn_text: str,
     db: AsyncSession,
-    data_dir: str = "/app/data"
+    data_dir: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Asynchronously analyze a game and save results to JSON file.
@@ -489,8 +494,9 @@ async def analyze_game_async(
     Returns:
         Dictionary with analysis results and file path
     """
-    # Create analysis directory if it doesn't exist
-    analysis_dir = Path(data_dir) / "analysis"
+    # Resolve data directory and ensure analysis dir exists
+    base_data_dir = Path(data_dir) if data_dir else resolve_data_dir()
+    analysis_dir = base_data_dir / "analysis"
     analysis_dir.mkdir(exist_ok=True)
 
     # Fetch settings from database
@@ -530,7 +536,7 @@ async def analyze_game_async(
     }
 
 
-def get_game_analysis(game_id: int, data_dir: str = "/app/data") -> Optional[Dict[str, Any]]:
+def get_game_analysis(game_id: int, data_dir: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """
     Load existing analysis from JSON file.
 
@@ -541,7 +547,8 @@ def get_game_analysis(game_id: int, data_dir: str = "/app/data") -> Optional[Dic
     Returns:
         Analysis dictionary if file exists, None otherwise
     """
-    json_path = Path(data_dir) / "analysis" / f"{game_id}.json"
+    base_data_dir = Path(data_dir) if data_dir else resolve_data_dir()
+    json_path = base_data_dir / "analysis" / f"{game_id}.json"
 
     if not json_path.exists():
         return None
@@ -554,7 +561,7 @@ def get_game_analysis(game_id: int, data_dir: str = "/app/data") -> Optional[Dic
         return None
 
 
-def has_game_analysis(game_id: int, data_dir: str = "/app/data") -> bool:
+def has_game_analysis(game_id: int, data_dir: Optional[str] = None) -> bool:
     """
     Check if analysis file exists for a game.
 
@@ -565,5 +572,6 @@ def has_game_analysis(game_id: int, data_dir: str = "/app/data") -> bool:
     Returns:
         True if analysis file exists, False otherwise
     """
-    json_path = Path(data_dir) / "analysis" / f"{game_id}.json"
+    base_data_dir = Path(data_dir) if data_dir else resolve_data_dir()
+    json_path = base_data_dir / "analysis" / f"{game_id}.json"
     return json_path.exists()
