@@ -45,6 +45,7 @@
 <summary>Table of Contents</summary>
 
 - [Table of Contents](#table-of-contents)
+- [Quick Download](#quick-download)
 - [Overview](#overview)
 - [Features](#features)
 - [Project Structure](#project-structure)
@@ -60,6 +61,15 @@
 - [Acknowledgments](#acknowledgments)
 
 </details>
+
+---
+
+## Quick Download
+
+  - [macOS Apple Silicon](https://github.com/tarekchaalan/local-chess-analyzer/releases/latest/download/LocalChessAnalyzer-macOS-AppleSilicon.zip)
+  - [macOS Intel](https://github.com/tarekchaalan/local-chess-analyzer/releases/latest/download/LocalChessAnalyzer-macOS-Intel.zip)
+  - [Windows](https://github.com/tarekchaalan/local-chess-analyzer/releases/latest/download/LocalChessAnalyzer-Windows.zip)
+  - [Linux](https://github.com/tarekchaalan/local-chess-analyzer/releases/latest/download/LocalChessAnalyzer-Linux.zip)
 
 ---
 
@@ -635,10 +645,10 @@ Run the project with:
 **Desktop app (recommended)**
 
 - Download from Releases:
-  - macOS Apple Silicon: [`LocalChessAnalyzer-macOS-AppleSilicon.zip`](https://github.com/tarekchaalan/local-chess-analyzer/releases)
-  - macOS Intel: [`LocalChessAnalyzer-macOS-Intel.zip`](https://github.com/tarekchaalan/local-chess-analyzer/releases)
-  - Windows: [`LocalChessAnalyzer-Windows.zip`](https://github.com/tarekchaalan/local-chess-analyzer/releases)
-  - Linux: [`LocalChessAnalyzer-Linux.zip`](https://github.com/tarekchaalan/local-chess-analyzer/releases)
+  - macOS Apple Silicon: [`LocalChessAnalyzer-macOS-AppleSilicon.zip`](https://github.com/tarekchaalan/local-chess-analyzer/releases/latest/download/LocalChessAnalyzer-macOS-AppleSilicon.zip)
+  - macOS Intel: [`LocalChessAnalyzer-macOS-Intel.zip`](https://github.com/tarekchaalan/local-chess-analyzer/releases/latest/download/LocalChessAnalyzer-macOS-Intel.zip)
+  - Windows: [`LocalChessAnalyzer-Windows.zip`](https://github.com/tarekchaalan/local-chess-analyzer/releases/latest/download/LocalChessAnalyzer-Windows.zip)
+  - Linux: [`LocalChessAnalyzer-Linux.zip`](https://github.com/tarekchaalan/local-chess-analyzer/releases/latest/download/LocalChessAnalyzer-Linux.zip)
 - Unzip and run the `LocalChessAnalyzer` executable.
 - macOS Gatekeeper: if blocked, open System Settings → Privacy & Security → scroll to the bottom → Open Anyway. Then retry analysis. After a successful single analysis, the notice will be hidden permanently.
 - Data lives in `data/` in `_internal` (SQLite and analysis files).
