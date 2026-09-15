@@ -12,8 +12,8 @@
   import Toasts from '$lib/ui/Toasts.svelte';
   import Icon from '$lib/ui/Icon.svelte';
   import NotFound from './routes/NotFound.svelte';
-  import Placeholder from './routes/Placeholder.svelte';
   import Dashboard from './routes/Dashboard.svelte';
+  import Settings from './routes/Settings.svelte';
   import Accounts from './routes/Accounts.svelte';
   import Games from './routes/Games.svelte';
   import GameReview from './routes/GameReview.svelte';
@@ -24,7 +24,7 @@
     { path: '/games', component: Games },
     { path: '/games/:id', component: GameReview },
     { path: '/accounts', component: Accounts },
-    { path: '/settings', component: Placeholder },
+    { path: '/settings', component: Settings },
     { path: '/setup', component: Setup },
   ];
 
