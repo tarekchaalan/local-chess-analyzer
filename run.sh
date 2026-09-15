@@ -6,7 +6,7 @@
 set -eu
 cd "$(dirname "$0")"
 
-need() { command -v "$1" >/dev/null 2>&1 || { echo "error: '$1' is required — $2" >&2; exit 1; }; }
+need() { command -v "$1" >/dev/null 2>&1 || { echo "error: '$1' is required - $2" >&2; exit 1; }; }
 need uv  "install from https://docs.astral.sh/uv/"
 need npm "install Node 22 from https://nodejs.org/"
 
@@ -20,17 +20,17 @@ for arg in "$@"; do
   esac
 done
 
-echo "▸ backend dependencies"
+echo "> backend dependencies"
 ( cd backend && uv sync --quiet )
 
-echo "▸ stockfish"
+echo "> stockfish"
 ( cd backend && uv run --no-sync fetch-stockfish )
 
-echo "▸ frontend dependencies"
+echo "> frontend dependencies"
 ( cd frontend && npm install --no-audit --no-fund --loglevel=error )
 
 if [ "$DEV" = 1 ]; then
-  echo "▸ dev servers (Ctrl+C stops both)"
+  echo "> dev servers (Ctrl+C stops both)"
   trap 'kill 0' INT TERM EXIT
   ( cd backend && uv run --no-sync uvicorn lca.main:app --reload --port 42069 ) &
   ( cd frontend && npm run dev )
@@ -38,9 +38,9 @@ if [ "$DEV" = 1 ]; then
 fi
 
 if [ "$BUILD" = 1 ]; then
-  echo "▸ frontend build"
+  echo "> frontend build"
   ( cd frontend && npm run build )
 fi
 
-echo "▸ starting — http://127.0.0.1:42069  (Ctrl+C to stop)"
+echo "> starting - http://127.0.0.1:42069  (Ctrl+C to stop)"
 cd backend && exec uv run --no-sync lca

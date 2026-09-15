@@ -1,0 +1,4 @@
+# Keep the Windows launchers CRLF; PowerShell 5.1 needs the BOM kept too.
+run.ps1 text eol=crlf
+run.cmd text eol=crlf
+run.sh text eol=lf
