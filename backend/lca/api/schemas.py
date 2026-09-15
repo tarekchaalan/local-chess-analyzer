@@ -174,3 +174,57 @@ class OpeningStat(ResultCounts):
 class ResultsByColorOut(BaseModel):
     white: ResultCounts
     black: ResultCounts
+
+
+# ---- settings / system / database ----------------------------------------------------
+
+
+class SettingsUpdateOut(BaseModel):
+    updated: list[str]
+    settings: dict[str, str]
+
+
+class CpuInfo(BaseModel):
+    physical_cores: int
+    logical_cores: int
+    usage_percent: float
+    recommended_threads: int
+
+
+class MemoryInfo(BaseModel):
+    total_mb: int
+    available_mb: int
+    used_mb: int
+    usage_percent: float
+    recommended_hash_mb: int
+
+
+class EngineInfo(BaseModel):
+    path: str
+    exists: bool
+    valid: bool
+    name: str | None
+    message: str
+
+
+class SystemOut(BaseModel):
+    cpu: CpuInfo
+    memory: MemoryInfo
+    engine: EngineInfo
+    recommended_depth: int
+    platform: str
+
+
+class EngineValidateRequest(BaseModel):
+    path: str = Field(min_length=1, max_length=1024)
+
+
+class DatabaseImportOut(BaseModel):
+    games: int
+    accounts: int
+    backup_path: str | None
+
+
+class DatabaseResetOut(BaseModel):
+    deleted_games: int
+    deleted_accounts: int

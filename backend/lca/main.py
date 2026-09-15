@@ -9,7 +9,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from .api import accounts, events, games, health, jobs, stats
+from .api import accounts, database, events, games, health, jobs, stats, system
+from .api import settings as settings_api
 from .api.errors import install_error_handlers
 from .config import Paths
 from .db.bootstrap import init_db
@@ -94,6 +95,9 @@ def create_app(
         games.router,
         jobs.router,
         stats.router,
+        settings_api.router,
+        system.router,
+        database.router,
         events.router,
     ):
         app.include_router(router, prefix="/api")
