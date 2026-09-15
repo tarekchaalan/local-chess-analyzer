@@ -5,8 +5,16 @@
 
   let { moves, ply, onseek }: { moves: MoveRecord[]; ply: number; onseek: (ply: number) => void } = $props();
 
-  const W = 600;
-  const H = 120;
+  let wrapEl = $state<HTMLDivElement>();
+  let W = $state(600);
+  const H = 110;
+  $effect(() => {
+    if (!wrapEl) return;
+    const ro = new ResizeObserver(() => (W = Math.max(200, wrapEl!.clientWidth)));
+    ro.observe(wrapEl);
+    W = Math.max(200, wrapEl.clientWidth);
+    return () => ro.disconnect();
+  });
   const PAD = { l: 4, r: 4, t: 6, b: 6 };
 
   // Series: white win% at each position; index 0 = start.
@@ -55,11 +63,12 @@
   });
 </script>
 
-<div class="graph">
+<div class="graph" bind:this={wrapEl}>
   <svg
     bind:this={svgEl}
     viewBox="0 0 {W} {H}"
-    preserveAspectRatio="none"
+    width={W}
+    height={H}
     role="img"
     aria-label="Evaluation over the game"
     onpointermove={(e) => (hover = plyFromEvent(e))}

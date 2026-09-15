@@ -34,6 +34,8 @@
 
   const inSetup = $derived(router.path === '/setup');
 
+  let offlineTimer: ReturnType<typeof setTimeout> | null = null;
+
   onMount(() => {
     let disconnect = () => {};
     (async () => {
@@ -52,11 +54,14 @@
         job: (job) => jobs.applyEvent(job),
         account: (ev) => accounts.applyEvent(ev),
         open: () => {
+          if (offlineTimer) clearTimeout(offlineTimer);
+          offlineTimer = null;
           offline = false;
           jobs.load().catch(() => {});
         },
         close: () => {
-          offline = true;
+          // Only warn if the stream stays down for a while; reconnects are normal.
+          if (!offlineTimer) offlineTimer = setTimeout(() => (offline = true), 4000);
         },
       });
     })();

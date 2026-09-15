@@ -13,8 +13,16 @@
     height = 180,
   }: { points: Point[]; domain?: [number, number]; unit?: string; height?: number } = $props();
 
-  const W = 640;
+  let wrapEl = $state<HTMLDivElement>();
+  let W = $state(640);
   const H = $derived(height);
+  $effect(() => {
+    if (!wrapEl) return;
+    const ro = new ResizeObserver(() => (W = Math.max(200, wrapEl!.clientWidth)));
+    ro.observe(wrapEl);
+    W = Math.max(200, wrapEl.clientWidth);
+    return () => ro.disconnect();
+  });
   const PAD = { l: 34, r: 12, t: 12, b: 24 };
   const n = $derived(points.length);
   const [lo, hi] = $derived.by(() => {
@@ -38,11 +46,11 @@
   }
 </script>
 
-<div class="chart">
+<div class="chart" bind:this={wrapEl}>
   {#if n === 0}
     <p class="muted empty">No analysed games yet.</p>
   {:else}
-    <svg bind:this={svgEl} viewBox="0 0 {W} {H}" preserveAspectRatio="none" style="height:{H}px" role="img" aria-label="Line chart"
+    <svg bind:this={svgEl} viewBox="0 0 {W} {H}" width={W} height={H} role="img" aria-label="Line chart"
       onpointermove={(e) => (hover = idxFromEvent(e))} onpointerleave={() => (hover = null)}>
       {#each ticks as t (t)}
         <line x1={PAD.l} x2={W - PAD.r} y1={y(t)} y2={y(t)} class="grid" vector-effect="non-scaling-stroke" />

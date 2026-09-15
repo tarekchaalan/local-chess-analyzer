@@ -20,7 +20,8 @@
 
 <div class="bar" class:flip={whiteOnTop} role="img" aria-label="Evaluation {formatEval(value)}">
   <div class="white" style="height:{white}%"></div>
-  <span class="label mono" class:top={whiteLeads !== whiteOnTop} class:onwhite={whiteLeads}>{label}</span>
+  <!-- label sits inside the leading side's area: white area is on top when flipped -->
+  <span class="label mono" class:top={whiteLeads === whiteOnTop} class:onwhite={whiteLeads}>{label}</span>
 </div>
 
 <style>

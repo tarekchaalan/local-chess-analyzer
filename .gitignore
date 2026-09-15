@@ -68,3 +68,5 @@ Icon?
 # v2 backend
 backend/.venv/
 backend/__pycache__/
+data/*.db-*
+data/lca.*

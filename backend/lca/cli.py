@@ -11,8 +11,9 @@ import webbrowser
 
 import uvicorn
 
-from .config import Paths
-from .main import create_app
+# Absolute imports: PyInstaller runs this file as a top-level script.
+from lca.config import Paths
+from lca.main import create_app
 
 HOST = "127.0.0.1"
 PORT = 42069
