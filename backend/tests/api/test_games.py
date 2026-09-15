@@ -125,6 +125,35 @@ async def test_jobs_endpoints(client, synced):
         return active == []
 
     assert await wait_until(all_finished, timeout=15)
+    # cancelled-while-queued games are released, not left showing "queued"
+    assert (await client.get("/api/games", params={"analysis_status": "queued"})).json()[
+        "total"
+    ] == 0
     cleared = (await client.delete("/api/jobs/finished")).json()["count"]
     assert cleared >= len(jobs)
     assert (await client.get("/api/jobs/123456")).status_code == 404
+
+
+async def test_cancelled_reanalysis_keeps_existing_analysis(client, synced):
+    gid = (await client.get("/api/games")).json()["items"][0]["id"]
+    first = (await client.post(f"/api/games/{gid}/analyze")).json()
+    assert (await wait_for_job(client, first["id"], timeout=15))["status"] == "done"
+
+    # force a second run, then cancel everything before/while it runs
+    job = (await client.post(f"/api/games/{gid}/analyze", json={"force": True})).json()
+    await client.post("/api/jobs/cancel-all")
+    final = await wait_for_job(client, job["id"], timeout=15)
+    assert final["status"] in ("cancelled", "done")
+
+    game = (await client.get(f"/api/games/{gid}")).json()
+    assert game["analysis_status"] == "done"
+    assert (await client.get(f"/api/games/{gid}/analysis")).status_code == 200
+
+
+async def test_job_ids_are_never_reused(client, synced):
+    ids = [g["id"] for g in (await client.get("/api/games")).json()["items"]]
+    a = (await client.post(f"/api/games/{ids[0]}/analyze")).json()
+    await wait_for_job(client, a["id"], timeout=15)
+    await client.delete("/api/jobs/finished")
+    b = (await client.post(f"/api/games/{ids[1]}/analyze")).json()
+    assert b["id"] > a["id"]

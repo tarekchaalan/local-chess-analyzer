@@ -31,6 +31,7 @@ class Account(Base):
     __tablename__ = "accounts"
     __table_args__ = (
         UniqueConstraint("platform", "username_key", name="uq_account_platform_user"),
+        {"sqlite_autoincrement": True},
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -52,6 +53,7 @@ class Game(Base):
         Index("ix_games_time_class", "time_class"),
         Index("ix_games_analysis_status", "analysis_status"),
         Index("ix_games_user_result", "user_result"),
+        {"sqlite_autoincrement": True},
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -107,7 +109,11 @@ class Analysis(Base):
 
 class Job(Base):
     __tablename__ = "jobs"
-    __table_args__ = (Index("ix_jobs_status_kind", "status", "kind"),)
+    # Never reuse ids: SSE consumers key on them, and clearing finished jobs must not recycle them.
+    __table_args__ = (
+        Index("ix_jobs_status_kind", "status", "kind"),
+        {"sqlite_autoincrement": True},
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     kind: Mapped[str] = mapped_column(String(16), nullable=False)  # analyze | sync

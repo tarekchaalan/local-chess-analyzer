@@ -59,7 +59,7 @@ def create_app(
             book=book or OpeningBook.load(paths.openings_path()),
             platform_factory=platform_factory or default_platform_factory,
         )
-        runner = JobRunner(sf, bus, workers.handlers())
+        runner = JobRunner(sf, bus, workers.handlers(), on_cancelled=workers.job_cancelled)
         workers.runner = runner
 
         app.state.paths = paths

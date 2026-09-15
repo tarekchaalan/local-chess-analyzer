@@ -43,6 +43,12 @@ class Workers:
             await session.commit()
         self.bus.publish("game", {"id": game_id, "analysis_status": status})
 
+    async def _release_game(self, game_id: int) -> None:
+        """A job let go of a game without finishing: keep 'done' if an analysis exists."""
+        async with self.sf() as session:
+            has_analysis = await session.get(Analysis, game_id) is not None
+        await self._set_game_status(game_id, "done" if has_analysis else "none")
+
     async def enqueue_analyze(self, game_id: int) -> Job:
         assert self.runner is not None
         job = await self.runner.enqueue("analyze", game_id=game_id)
@@ -53,6 +59,16 @@ class Workers:
         assert self.runner is not None
         params = {"months": months} if months else None
         return await self.runner.enqueue("sync", account_id=account_id, params=params)
+
+    async def job_cancelled(self, job: Job) -> None:
+        """A queued job was cancelled before it ran: release the game it was holding."""
+        if job.kind != "analyze" or job.game_id is None:
+            return
+        async with self.sf() as session:
+            game = await session.get(Game, job.game_id)
+            if game is None or game.analysis_status != "queued":
+                return
+        await self._release_game(job.game_id)
 
     # ---- handlers -----------------------------------------------------------------
 
@@ -74,7 +90,7 @@ class Workers:
                 is_cancelled=ctx.is_cancelled,
             )
         except (AnalysisCancelled, JobCancelled):
-            await self._set_game_status(game_id, "none")
+            await self._release_game(game_id)
             raise JobCancelled() from None
         except EngineUnavailable as e:
             await self._set_game_status(game_id, "failed")

@@ -46,11 +46,14 @@ export const jobs = {
   get running(): Job | undefined {
     return state.list.find((j) => j.status === 'running' && j.kind === 'analyze');
   },
+  /** The newest job for a game, only if it is still active. */
   forGame(gameId: number): Job | undefined {
-    return state.list.find((j) => j.game_id === gameId && ACTIVE.has(j.status));
+    const newest = state.list.filter((j) => j.kind === 'analyze' && j.game_id === gameId).sort((a, b) => b.id - a.id)[0];
+    return newest && ACTIVE.has(newest.status) ? newest : undefined;
   },
   forAccount(accountId: number): Job | undefined {
-    return state.list.find((j) => j.kind === 'sync' && j.account_id === accountId && ACTIVE.has(j.status));
+    const newest = state.list.filter((j) => j.kind === 'sync' && j.account_id === accountId).sort((a, b) => b.id - a.id)[0];
+    return newest && ACTIVE.has(newest.status) ? newest : undefined;
   },
   load,
   applyEvent,

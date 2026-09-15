@@ -6,6 +6,7 @@
   import { settings } from '$lib/stores/settings.svelte';
   import { accounts } from '$lib/stores/accounts.svelte';
   import { jobs } from '$lib/stores/jobs.svelte';
+  import { gameStatus } from '$lib/stores/gameStatus.svelte';
   import { toasts } from '$lib/stores/toasts.svelte';
   import Sidebar from '$lib/components/Sidebar.svelte';
   import TopBar from '$lib/components/TopBar.svelte';
@@ -52,6 +53,7 @@
       }
       disconnect = connectEvents({
         job: (job) => jobs.applyEvent(job),
+        game: (ev) => gameStatus.applyEvent(ev),
         account: (ev) => accounts.applyEvent(ev),
         open: () => {
           if (offlineTimer) clearTimeout(offlineTimer);

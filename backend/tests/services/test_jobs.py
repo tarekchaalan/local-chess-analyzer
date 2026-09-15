@@ -178,3 +178,15 @@ async def test_lanes_run_concurrently(sf):
 
 async def test_job_cancelled_exception_type():
     assert issubclass(JobCancelled, Exception)
+
+
+async def test_cancel_hook_runs_for_queued_jobs_only(sf):
+    seen = []
+
+    async def hook(job):
+        seen.append((job.id, job.status))
+
+    runner = JobRunner(sf, EventBus(), {"analyze": _noop}, on_cancelled=hook)
+    job = await runner.enqueue("analyze", game_id=1)  # runner not started -> stays queued
+    assert await runner.cancel(job.id)
+    assert seen == [(job.id, "cancelled")]

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { jobs } from '$lib/stores/jobs.svelte';
+  import { gameStatus } from '$lib/stores/gameStatus.svelte';
   import { formatDate, formatTimeControl, TIME_CLASS_LABEL } from '$lib/format';
   import { accuracyTone } from '$lib/chess/eval';
   import Badge from '$lib/ui/Badge.svelte';
@@ -14,7 +15,7 @@
   }: { game: GameListItem; selected?: boolean; ontoggle?: (id: number, shift: boolean) => void } = $props();
 
   const job = $derived(jobs.forGame(game.id));
-  const status = $derived(job ? job.status : game.analysis_status);
+  const status = $derived(job ? job.status : gameStatus.of(game));
   const resultLabel = { win: 'Win', loss: 'Loss', draw: 'Draw' } as const;
 </script>
 

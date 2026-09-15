@@ -8,6 +8,7 @@
   import { replayPositions, type Replay } from '$lib/chess/replay';
   import { playSound, preloadSounds, soundFor } from '$lib/chess/sounds';
   import { settings } from '$lib/stores/settings.svelte';
+  import { gameStatus } from '$lib/stores/gameStatus.svelte';
   import Board from '$lib/components/Board.svelte';
   import EvalBar from '$lib/components/EvalBar.svelte';
   import EvalGraph from '$lib/components/EvalGraph.svelte';
@@ -260,7 +261,7 @@
                 <ProgressBar value={job.progress} max={job.total} />
                 <span class="muted small">{job.total ? `${job.progress} / ${job.total} moves` : 'Queued behind other games'}</span>
               </div>
-            {:else if game.analysis_status === 'failed'}
+            {:else if gameStatus.of(game) === 'failed'}
               <div class="analyzing">
                 <div class="row"><Icon name="warning" size={16} /><strong>Analysis failed</strong></div>
                 <span class="muted small">Check the engine in Settings, then try again.</span>

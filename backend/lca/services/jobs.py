@@ -80,6 +80,7 @@ class JobContext:
 
 
 Handler = Callable[[Job, JobContext], Awaitable[None]]
+CancelHook = Callable[[Job], Awaitable[None]]
 
 
 class JobRunner:
@@ -90,10 +91,13 @@ class JobRunner:
         handlers: dict[str, Handler],
         *,
         lanes: dict[str, str] | None = None,
+        on_cancelled: CancelHook | None = None,
     ):
         self._sf = session_factory
         self._bus = bus
         self._handlers = handlers
+        # Called for jobs cancelled while still queued; running jobs clean up in their handler.
+        self._on_cancelled = on_cancelled
         self._lanes = lanes or {"analyze": "analysis", "sync": "sync"}
         self._tasks: list[asyncio.Task[None]] = []
         self._wake: dict[str, asyncio.Event] = {
@@ -173,6 +177,8 @@ class JobRunner:
                 job.finished_at = utcnow_iso()
                 await session.commit()
                 self._bus.publish("job", job_to_dict(job))
+                if self._on_cancelled is not None:
+                    await self._on_cancelled(job)
                 return True
         self._cancelled.add(job_id)
         return True
