@@ -30,10 +30,10 @@
   );
 
   let hover = $state<number | null>(null);
-  let svgEl: SVGSVGElement;
+  let svgEl = $state<SVGSVGElement>();
 
   function plyFromEvent(e: PointerEvent): number {
-    const rect = svgEl.getBoundingClientRect();
+    const rect = svgEl!.getBoundingClientRect();
     const px = ((e.clientX - rect.left) / rect.width) * W;
     const i = Math.round(((px - PAD.l) / (W - PAD.l - PAD.r)) * (n - 1));
     return Math.max(0, Math.min(n - 1, i));

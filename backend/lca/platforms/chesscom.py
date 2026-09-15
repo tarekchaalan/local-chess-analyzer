@@ -41,8 +41,8 @@ def _opening_name_from_url(url: str | None) -> str | None:
     if not url:
         return None
     slug = url.rstrip("/").split("/")[-1]
-    slug = slug.split("...")[0]
-    slug = re.split(r"-\d+\.", slug)[0]
+    # Cut at the first move token: "-1.e4", "-1...d5", "...4.Nf3", "-2.Nf3".
+    slug = re.split(r"(?:-|\.\.\.)\d+\.{1,3}", slug)[0]
     name = slug.replace("-", " ").strip()
     return name or None
 

@@ -82,4 +82,16 @@ def test_opening_name_from_url():
         )
         == "Sicilian Defense Najdorf Variation"
     )
+    assert (
+        _opening_name_from_url("https://www.chess.com/openings/Mieses-Opening-1...d5")
+        == "Mieses Opening"
+    )
+    assert (
+        _opening_name_from_url("https://www.chess.com/openings/Anderssen-Opening-1...d5-2.Nf3")
+        == "Anderssen Opening"
+    )
+    assert (
+        _opening_name_from_url("https://www.chess.com/openings/Modern-Defense-with-1-d4")
+        == "Modern Defense with 1 d4"
+    )
     assert _opening_name_from_url(None) is None
