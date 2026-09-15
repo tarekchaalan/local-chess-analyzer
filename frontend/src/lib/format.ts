@@ -56,3 +56,21 @@ export function errorMessage(e: unknown): string {
   if (e instanceof Error) return e.message;
   return String(e);
 }
+
+/** "180" -> "3+0", "180+2" -> "3+2", "1/86400" -> "1 day", "3d" -> "3 days", "600" -> "10+0". */
+export function formatTimeControl(tc: string | null | undefined): string {
+  if (!tc) return '';
+  const daily = /^1\/(\d+)$/.exec(tc);
+  if (daily) {
+    const days = Math.round(Number(daily[1]) / 86400);
+    return `${days} day${days === 1 ? '' : 's'}`;
+  }
+  const d = /^(\d+)d$/.exec(tc);
+  if (d) return `${d[1]} day${d[1] === '1' ? '' : 's'}`;
+  const m = /^(\d+)(?:\+(\d+))?$/.exec(tc);
+  if (!m) return tc;
+  const base = Number(m[1]);
+  const inc = m[2] ?? '0';
+  const mins = base % 60 === 0 ? String(base / 60) : (base / 60).toFixed(1).replace(/\.0$/, '');
+  return `${mins}+${inc}`;
+}

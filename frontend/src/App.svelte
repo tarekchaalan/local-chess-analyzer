@@ -14,11 +14,12 @@
   import NotFound from './routes/NotFound.svelte';
   import Placeholder from './routes/Placeholder.svelte';
   import Accounts from './routes/Accounts.svelte';
+  import Games from './routes/Games.svelte';
   import Setup from './routes/Setup.svelte';
 
   const routes = [
     { path: '/', component: Placeholder },
-    { path: '/games', component: Placeholder },
+    { path: '/games', component: Games },
     { path: '/games/:id', component: Placeholder },
     { path: '/accounts', component: Accounts },
     { path: '/settings', component: Placeholder },
