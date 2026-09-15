@@ -1,0 +1,132 @@
+/* Design tokens. Dark is the default palette; light overrides below. */
+:root {
+  color-scheme: dark;
+
+  /* surfaces */
+  --bg: #0e1013;
+  --surface: #15181d;
+  --raised: #1c2027;
+  --overlay: #232830;
+  --hover: rgba(255, 255, 255, 0.04);
+  --active: rgba(255, 255, 255, 0.08);
+  --border: #262b33;
+  --border-strong: #343b45;
+
+  /* text */
+  --text: #e6e8eb;
+  --text-muted: #8b929c;
+  --text-faint: #5f6670;
+
+  /* semantic */
+  --accent: #7cb342;
+  --accent-hover: #8fc652;
+  --accent-soft: rgba(124, 179, 66, 0.14);
+  --on-accent: #0e1013;
+  --danger: #e5484d;
+  --danger-soft: rgba(229, 72, 77, 0.14);
+  --warning: #f7c631;
+  --info: #5b8bb0;
+  --info-soft: rgba(91, 139, 176, 0.16);
+  --win: #7cb342;
+  --loss: #e5484d;
+  --draw: #8b929c;
+
+  /* classifications (chess.com convention) */
+  --c-brilliant: #1baca6;
+  --c-great: #5b8bb0;
+  --c-best: #81b64c;
+  --c-excellent: #96bc4b;
+  --c-good: #95b776;
+  --c-book: #a88865;
+  --c-inaccuracy: #f7c631;
+  --c-mistake: #e58f2a;
+  --c-miss: #ee6b55;
+  --c-blunder: #ca3431;
+  --c-forced: #8b929c;
+
+  /* board */
+  --board-light: #d5d0c3;
+  --board-dark: #6f7f6b;
+  --board-last-move: rgba(247, 198, 49, 0.42);
+  --board-check: radial-gradient(ellipse at center, rgba(229, 72, 77, 0.9) 0%, rgba(229, 72, 77, 0.35) 55%, transparent 80%);
+
+  /* typography */
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 20px;
+  --fs-2xl: 28px;
+
+  /* spacing & shape */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --radius: 6px;
+  --radius-lg: 10px;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 10px 30px rgba(0, 0, 0, 0.35);
+  --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+
+  --sidebar-w: 232px;
+  --topbar-h: 52px;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f4f4f1;
+  --surface: #ffffff;
+  --raised: #fafaf8;
+  --overlay: #ffffff;
+  --hover: rgba(0, 0, 0, 0.04);
+  --active: rgba(0, 0, 0, 0.08);
+  --border: #e3e3de;
+  --border-strong: #c9c9c2;
+  --text: #1b1d21;
+  --text-muted: #5f6670;
+  --text-faint: #9aa0a8;
+  --accent: #5a9a1f;
+  --accent-hover: #4f8a1a;
+  --accent-soft: rgba(90, 154, 31, 0.14);
+  --on-accent: #ffffff;
+  --danger: #d23a3f;
+  --danger-soft: rgba(210, 58, 63, 0.12);
+  --info: #3f78a8;
+  --info-soft: rgba(63, 120, 168, 0.14);
+  --board-light: #ece6d6;
+  --board-dark: #86997f;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --bg: #f4f4f1;
+    --surface: #ffffff;
+    --raised: #fafaf8;
+    --overlay: #ffffff;
+    --hover: rgba(0, 0, 0, 0.04);
+    --active: rgba(0, 0, 0, 0.08);
+    --border: #e3e3de;
+    --border-strong: #c9c9c2;
+    --text: #1b1d21;
+    --text-muted: #5f6670;
+    --text-faint: #9aa0a8;
+    --accent: #5a9a1f;
+    --accent-hover: #4f8a1a;
+    --accent-soft: rgba(90, 154, 31, 0.14);
+    --on-accent: #ffffff;
+    --danger: #d23a3f;
+    --danger-soft: rgba(210, 58, 63, 0.12);
+    --info: #3f78a8;
+    --info-soft: rgba(63, 120, 168, 0.14);
+    --board-light: #ece6d6;
+    --board-dark: #86997f;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 10px 30px rgba(0, 0, 0, 0.08);
+  }
+}
