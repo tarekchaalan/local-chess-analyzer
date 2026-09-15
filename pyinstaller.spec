@@ -1,33 +1,30 @@
 # -*- mode: python ; coding: utf-8 -*-
+"""PyInstaller build for the desktop bundle. Run from the repo root:
+    backend/.venv/bin/pyinstaller --clean --noconfirm pyinstaller.spec
+"""
 import os
-from PyInstaller.building.build_main import Analysis, PYZ, EXE, COLLECT
 
-block_cipher = None
+from PyInstaller.building.build_main import COLLECT, EXE, PYZ, Analysis
 
-datas = []
+datas = [("backend/lca/data", "lca/data")]
 if os.path.isdir("frontend/dist"):
     datas.append(("frontend/dist", "frontend_dist"))
 if os.path.isdir("stockfish"):
     datas.append(("stockfish", "stockfish"))
-if os.path.isdir("data"):
-    datas.append(("data", "data"))
 
 a = Analysis(
-    ["backend/app/cli.py"],
-    pathex=["."],
+    ["backend/lca/cli.py"],
+    pathex=["backend"],
     binaries=[],
     datas=datas,
-    hiddenimports=["aiosqlite"],
+    hiddenimports=["aiosqlite", "sse_starlette", "sse_starlette.sse"],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
-    cipher=block_cipher,
+    excludes=["tkinter", "pytest"],
     noarchive=False,
 )
-pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+pyz = PYZ(a.pure, a.zipped_data)
 exe = EXE(
     pyz,
     a.scripts,
@@ -38,8 +35,6 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    upx_exclude=[],
-    runtime_tmpdir=None,
     console=True,
     disable_windowed_traceback=False,
     argv_emulation=False,
@@ -57,5 +52,3 @@ coll = COLLECT(
     upx_exclude=[],
     name="LocalChessAnalyzer",
 )
-
-

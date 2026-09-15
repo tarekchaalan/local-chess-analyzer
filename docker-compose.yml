@@ -1,7 +1,5 @@
-version: '3.8'
-
 services:
-  # Backendu (FastAPI)
+  # Backend (FastAPI + analysis worker)
   backend:
     build:
       context: ./backend
@@ -13,7 +11,7 @@ services:
     ports:
       - "42069:42069"
 
-  # Frontend (Svelte + Nginx)
+  # Frontend (built SPA served by nginx, proxies /api to the backend)
   frontend:
     build:
       context: ./frontend

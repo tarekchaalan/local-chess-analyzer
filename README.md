@@ -584,102 +584,42 @@ This project requires the following:
 
 ### Installation
 
-Build local-chess-analyzer from the source and install dependencies:
+Prerequisites: Python 3.12+, [uv](https://docs.astral.sh/uv/), Node 22+. Stockfish binaries for every platform are bundled in `stockfish/`.
 
-1. **Clone the repository:**
-
-    ```sh
-    ❯ git clone https://github.com/tarekchaalan/local-chess-analyzer
-    ```
-
-2. **Navigate to the project directory:**
-
-    ```sh
-    ❯ cd local-chess-analyzer
-    ```
-
-3. **Install the dependencies:**
-
-<!-- SHIELDS BADGE CURRENTLY DISABLED -->
-	<!-- [![docker][docker-shield]][docker-link] -->
-	<!-- REFERENCE LINKS -->
-	<!-- [docker-shield]: https://img.shields.io/badge/Docker-2CA5E0.svg?style={badge_style}&logo=docker&logoColor=white -->
-	<!-- [docker-link]: https://www.docker.com/ -->
-
-	**Using [docker](https://www.docker.com/):**
-
-	```sh
-	❯ docker compose -f docker-compose.yml build
-	```
-<!-- SHIELDS BADGE CURRENTLY DISABLED -->
-	<!-- [![npm][npm-shield]][npm-link] -->
-	<!-- REFERENCE LINKS -->
-	<!-- [npm-shield]: None -->
-	<!-- [npm-link]: None -->
-
-	**Using npm (frontend dependencies):**
-
-	```sh
-	❯ cd frontend
-	❯ npm install
-	```
-<!-- SHIELDS BADGE CURRENTLY DISABLED -->
-	<!-- [![pip][pip-shield]][pip-link] -->
-	<!-- REFERENCE LINKS -->
-	<!-- [pip-shield]: None -->
-	<!-- [pip-link]: None -->
-
-	**Using pip (backend dependencies):**
-
-	```sh
-	❯ cd backend
-	❯ python3 -m venv .venv
-	❯ source .venv/bin/activate
-	❯ pip install -r requirements.txt
-	```
+```sh
+git clone https://github.com/tarekchaalan/local-chess-analyzer
+cd local-chess-analyzer
+(cd backend && uv sync)          # backend deps into backend/.venv
+(cd frontend && npm install)     # frontend deps
+```
 
 ### Usage
 
-Run the project with:
+**Desktop app (recommended)** — download the bundle for your platform from [Releases](https://github.com/tarekchaalan/local-chess-analyzer/releases/latest), unzip, run `LocalChessAnalyzer`. Data lives in `data/` next to the executable (`lca.db`).
 
-**Desktop app (recommended)**
+**Development**
 
-- Download from Releases:
-  - macOS Apple Silicon: [`LocalChessAnalyzer-macOS-AppleSilicon.zip`](https://github.com/tarekchaalan/local-chess-analyzer/releases/latest/download/LocalChessAnalyzer-macOS-AppleSilicon.zip)
-  - macOS Intel: [`LocalChessAnalyzer-macOS-Intel.zip`](https://github.com/tarekchaalan/local-chess-analyzer/releases/latest/download/LocalChessAnalyzer-macOS-Intel.zip)
-  - Windows: [`LocalChessAnalyzer-Windows.zip`](https://github.com/tarekchaalan/local-chess-analyzer/releases/latest/download/LocalChessAnalyzer-Windows.zip)
-  - Linux: [`LocalChessAnalyzer-Linux.zip`](https://github.com/tarekchaalan/local-chess-analyzer/releases/latest/download/LocalChessAnalyzer-Linux.zip)
-- Unzip and run the `LocalChessAnalyzer` executable.
-- macOS Gatekeeper: if blocked, open System Settings → Privacy & Security → scroll to the bottom → Open Anyway. Then retry analysis. After a successful single analysis, the notice will be hidden permanently.
-- Data lives in `data/` in `_internal` (SQLite and analysis files).
-- Stockfish is bundled for your platform and auto-detected at runtime.
-
-**Using [docker](https://www.docker.com/):**
 ```sh
-docker compose -f docker-compose.yml up --build
-```
-- Frontend: http://localhost:6969
-- Backend API: http://localhost:42069
-- API Docs: http://localhost:42069/docs
+# terminal 1 — API on http://127.0.0.1:42069 (docs at /docs)
+cd backend && uv run uvicorn lca.main:app --reload --port 42069
 
-**Using npm (frontend dev) + pip (backend dev):**
-- Terminal 1 (backend):
-```sh
-cd backend
-source .venv/bin/activate
-uvicorn app.main:app --reload --port 42069
+# terminal 2 — UI on http://localhost:5173 (proxies /api to the backend)
+cd frontend && npm run dev
 ```
-- Terminal 2 (frontend):
+
+**Docker**
+
 ```sh
-cd frontend
-VITE_API_BASE_URL=http://localhost:42069 npm run dev
+docker compose up --build
 ```
+Frontend on http://localhost:6969, API on http://localhost:42069.
 
 ### Testing
 
-Automated tests are not configured yet in this repository.
-- Backend suggestion: add Pytest and run with `pytest`.
-- Frontend suggestion: add Vitest and run with `npm run test`.
+```sh
+cd backend && uv run pytest && uv run ruff check
+cd frontend && npm test && npm run check
+```
 
 ---
 
