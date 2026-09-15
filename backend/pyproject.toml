@@ -17,6 +17,7 @@ dependencies = [
 ]
 
 [project.scripts]
+lca = "lca.cli:main"
 fetch-stockfish = "lca.tools.fetch_stockfish:main"
 
 [dependency-groups]

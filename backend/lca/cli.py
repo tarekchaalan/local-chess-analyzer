@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import platform
 import subprocess
+import sys
 import threading
 import time
 import webbrowser
@@ -47,6 +48,17 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     paths = Paths()
     _clear_macos_quarantine(paths)
+    if paths.frontend_dist_dir() is None:
+        print(
+            "Frontend is not built: run `cd frontend && npm install && npm run build` first. "
+            "Serving the API only.",
+            file=sys.stderr,
+        )
+    if not paths.default_engine_path().exists():
+        print(
+            "Stockfish not found: run `cd backend && uv run fetch-stockfish` to download it.",
+            file=sys.stderr,
+        )
     app = create_app(paths)
     url = f"http://{HOST}:{PORT}/"
     print(f"Local Chess Analyzer running at {url}  (Ctrl+C to stop)")

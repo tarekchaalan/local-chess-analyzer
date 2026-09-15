@@ -133,9 +133,16 @@ Stockfish binaries are not committed. `fetch-stockfish` downloads the pinned off
 
 ### Usage
 
-**Desktop app (recommended)** — download the bundle for your platform from [Releases](https://github.com/tarekchaalan/local-chess-analyzer/releases/latest), unzip, run `LocalChessAnalyzer`. Data lives in `data/` next to the executable (`lca.db`).
+**Desktop app (recommended)** — download the bundle for your platform from [Releases](https://github.com/tarekchaalan/local-chess-analyzer/releases/latest), unzip, run `LocalChessAnalyzer`. It opens in your browser at `http://127.0.0.1:42069`. Data lives in `data/` next to the executable (`lca.db`).
 
-**Development**
+**From source, one command**
+
+```sh
+(cd frontend && npm run build)      # once, and after frontend changes
+cd backend && uv run lca            # serves API + UI on http://127.0.0.1:42069 and opens your browser
+```
+
+**Development** (hot reload)
 
 ```sh
 # terminal 1 — API on http://127.0.0.1:42069 (docs at /docs)
@@ -150,7 +157,7 @@ cd frontend && npm run dev
 ```sh
 docker compose up --build
 ```
-Frontend on http://localhost:6969, API on http://localhost:42069.
+Frontend on http://localhost:6969, API on http://localhost:42069. The image fetches Stockfish at build time.
 
 ### Testing
 
