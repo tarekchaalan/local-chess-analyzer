@@ -36,6 +36,7 @@ BRILLIANT_MIN_WIN_AFTER = 40.0
 BRILLIANT_MAX_WIN_BEFORE = 90.0
 GREAT_MIN_GAP = 10.0
 GREAT_MIN_WIN_BEFORE = 30.0
+GREAT_MAX_LEGAL_WHEN_IN_CHECK = 3  # escaping check with few options is not "finding" a move
 MISS_MIN_LOSS = 10.0
 MISS_MIN_WIN_AFTER = 50.0
 
@@ -58,7 +59,8 @@ class MoveContext:
 def classify(ctx: MoveContext) -> str:
     if ctx.in_book:
         return "book"
-    if ctx.board_before.legal_moves.count() == 1:
+    legal_count = ctx.board_before.legal_moves.count()
+    if legal_count == 1:
         return "forced"
 
     loss = ctx.win_before - ctx.win_after
@@ -78,6 +80,7 @@ def classify(ctx: MoveContext) -> str:
         and ctx.second_win is not None
         and ctx.win_before - ctx.second_win >= GREAT_MIN_GAP
         and ctx.win_before >= GREAT_MIN_WIN_BEFORE
+        and not (ctx.board_before.is_check() and legal_count <= GREAT_MAX_LEGAL_WHEN_IN_CHECK)
         and not is_simple_recapture(ctx.board_before, ctx.move, ctx.prev_move)
     ):
         return "great"

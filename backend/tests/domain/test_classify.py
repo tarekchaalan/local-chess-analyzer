@@ -100,6 +100,28 @@ def test_great_not_for_simple_recapture():
     assert classify(ctx) == "best"
 
 
+def test_great_not_for_check_escape_with_few_options():
+    # Black king in check, three legal king moves; picking the right one is not "great".
+    fen = "4k3/8/8/8/8/8/8/R3K3 w - - 0 1"
+    board = chess.Board(fen)
+    board.push_uci("a1a8")
+    assert board.is_check() and board.legal_moves.count() <= 3
+    ctx = MoveContext(
+        board_before=board,
+        move=chess.Move.from_uci("e8e7"),
+        best_move=chess.Move.from_uci("e8e7"),
+        win_before=50,
+        win_after=50,
+        second_win=30,
+        in_book=False,
+        best_is_mate=False,
+        mover_mated_before=False,
+        prev_classification=None,
+        prev_move=board.peek(),
+    )
+    assert classify(ctx) == "best"
+
+
 def test_great_blocked_when_lost_anyway():
     ctx = _ctx(START, "e2e4", win_before=15, win_after=15, second_win=3)
     assert classify(ctx) == "best"
