@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from .api import accounts, events, games, health, jobs
+from .api import accounts, events, games, health, jobs, stats
 from .api.errors import install_error_handlers
 from .config import Paths
 from .db.bootstrap import init_db
@@ -88,7 +88,14 @@ def create_app(
     )
     install_error_handlers(app)
 
-    for router in (health.router, accounts.router, games.router, jobs.router, events.router):
+    for router in (
+        health.router,
+        accounts.router,
+        games.router,
+        jobs.router,
+        stats.router,
+        events.router,
+    ):
         app.include_router(router, prefix="/api")
 
     dist = paths.frontend_dist_dir()

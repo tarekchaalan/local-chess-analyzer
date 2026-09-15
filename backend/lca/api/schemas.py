@@ -133,3 +133,44 @@ class BulkAnalyzeRequest(BaseModel):
 class BulkAnalyzeResponse(BaseModel):
     jobs: list[JobOut]
     skipped: list[int]
+
+
+# ---- stats ---------------------------------------------------------------------------
+
+
+class ResultCounts(BaseModel):
+    games: int
+    wins: int
+    draws: int
+    losses: int
+    win_rate: float | None
+
+
+class OverviewOut(ResultCounts):
+    analyzed: int
+    mean_accuracy: float | None
+    accounts: int
+
+
+class TrendPoint(BaseModel):
+    bucket: str
+    games: int
+    accuracy: float
+
+
+class TimeClassStat(ResultCounts):
+    time_class: str
+    analyzed: int
+    mean_accuracy: float | None
+    blunders_per_game: float | None
+    mistakes_per_game: float | None
+
+
+class OpeningStat(ResultCounts):
+    eco: str | None
+    name: str
+
+
+class ResultsByColorOut(BaseModel):
+    white: ResultCounts
+    black: ResultCounts
