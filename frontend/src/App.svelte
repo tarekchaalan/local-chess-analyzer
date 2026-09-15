@@ -15,12 +15,13 @@
   import Placeholder from './routes/Placeholder.svelte';
   import Accounts from './routes/Accounts.svelte';
   import Games from './routes/Games.svelte';
+  import GameReview from './routes/GameReview.svelte';
   import Setup from './routes/Setup.svelte';
 
   const routes = [
     { path: '/', component: Placeholder },
     { path: '/games', component: Games },
-    { path: '/games/:id', component: Placeholder },
+    { path: '/games/:id', component: GameReview },
     { path: '/accounts', component: Accounts },
     { path: '/settings', component: Placeholder },
     { path: '/setup', component: Setup },
