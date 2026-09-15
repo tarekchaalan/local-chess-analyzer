@@ -4,6 +4,7 @@ async def test_defaults_and_update(client, app):
     s = r.json()
     assert s["analysis_depth"] == "18" and s["theme"] == "system"
     assert s["setup_completed"] == "false"
+    assert s["move_sounds"] == "true"
 
     r = await client.patch("/api/settings", json={"analysis_depth": 12, "theme": "dark"})
     assert r.status_code == 200

@@ -3,7 +3,7 @@
     | 'dashboard' | 'games' | 'accounts' | 'settings' | 'sync' | 'play' | 'x' | 'check'
     | 'chevron-left' | 'chevron-right' | 'first' | 'last' | 'search' | 'trash' | 'external'
     | 'menu' | 'plus' | 'warning' | 'flip' | 'download' | 'upload' | 'chesscom' | 'lichess'
-    | 'info' | 'stop' | 'sparkle' | 'clock';
+    | 'info' | 'stop' | 'sparkle' | 'clock' | 'volume' | 'volume-off';
 
   let { name, size = 18, class: cls = '' }: { name: IconName; size?: number; class?: string } = $props();
 
@@ -35,6 +35,8 @@
     stop: 'M6 6h12v12H6z',
     sparkle: 'M12 2l2 6 6 2-6 2-2 6-2-6-6-2 6-2zM19 15l1 3 3 1-3 1-1 3-1-3-3-1 3-1z',
     clock: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 7v5l3 3',
+    volume: 'M4 10v4h3l4 4V6L7 10zM15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12',
+    'volume-off': 'M4 10v4h3l4 4V6L7 10zM16 9l5 6M21 9l-5 6',
   };
 </script>
 

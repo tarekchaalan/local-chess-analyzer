@@ -80,6 +80,7 @@ SPECS: dict[str, SettingSpec] = {
     "analysis_time_ms": SettingSpec(lambda _: "2000", _int_in(0, 600_000)),
     "auto_analyze_new_games": SettingSpec(lambda _: "false", _bool),
     "theme": SettingSpec(lambda _: "system", _theme),
+    "move_sounds": SettingSpec(lambda _: "true", _bool),
     "lichess_token": SettingSpec(lambda _: "", _text(256)),
     "setup_completed": SettingSpec(lambda _: "false", _bool),
 }

@@ -6,6 +6,8 @@
   import { toasts } from '$lib/stores/toasts.svelte';
   import { errorMessage, formatDateTime, formatTimeControl, TIME_CLASS_LABEL } from '$lib/format';
   import { replayPositions, type Replay } from '$lib/chess/replay';
+  import { playSound, preloadSounds, soundFor } from '$lib/chess/sounds';
+  import { settings } from '$lib/stores/settings.svelte';
   import Board from '$lib/components/Board.svelte';
   import EvalBar from '$lib/components/EvalBar.svelte';
   import EvalGraph from '$lib/components/EvalGraph.svelte';
@@ -116,8 +118,23 @@
     }
   }
 
+  const soundOn = $derived(settings.bool('move_sounds'));
+
+  async function setSound(enabled: boolean) {
+    try {
+      await settings.update({ move_sounds: enabled });
+    } catch (e) {
+      toasts.error(errorMessage(e));
+    }
+  }
+
+  /** Move to a ply and play the sound of the move we land on (or the one taken back). */
   function seek(p: number) {
-    ply = Math.max(0, Math.min(total, p));
+    const next = Math.max(0, Math.min(total, p));
+    if (next === ply || !replay || !game) return;
+    const landed = next > ply ? replay.moves[next - 1] : replay.moves[ply - 1];
+    ply = next;
+    if (soundOn && landed) playSound(soundFor(landed, landed.color === game.user_color));
   }
 
   function onKey(e: KeyboardEvent) {
@@ -128,6 +145,7 @@
       case 'Home': e.preventDefault(); seek(0); break;
       case 'End': e.preventDefault(); seek(total); break;
       case 'f': case 'F': orientation = orientation === 'w' ? 'b' : 'w'; break;
+      case 'm': case 'M': setSound(!soundOn); break;
     }
   }
 
@@ -144,6 +162,7 @@
 
   onMount(() => {
     load();
+    preloadSounds();
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   });
@@ -214,7 +233,7 @@
             />
           </div>
           <div class="nav">
-            <NavControls {ply} {total} onseek={seek} onflip={() => (orientation = orientation === 'w' ? 'b' : 'w')} />
+            <NavControls {ply} {total} sound={soundOn} onseek={seek} onsound={setSound} onflip={() => (orientation = orientation === 'w' ? 'b' : 'w')} />
           </div>
         </div>
       </section>

@@ -13,6 +13,7 @@
 
   let theme = $state(settings.get('theme', 'system'));
   let autoAnalyze = $state(settings.bool('auto_analyze_new_games'));
+  let moveSounds = $state(settings.bool('move_sounds'));
   let lichessToken = $state(settings.get('lichess_token'));
   let savingToken = $state(false);
   let version = $state('');
@@ -43,6 +44,15 @@
     }
   }
 
+  async function saveSounds() {
+    try {
+      await settings.update({ move_sounds: moveSounds });
+    } catch (e) {
+      toasts.error(errorMessage(e));
+      moveSounds = !moveSounds;
+    }
+  }
+
   async function saveToken() {
     savingToken = true;
     try {
@@ -64,13 +74,22 @@
   </Card>
 
   <Card title="Behaviour">
-    <label class="toggle">
-      <input type="checkbox" bind:checked={autoAnalyze} onchange={saveAuto} />
-      <span>
-        <strong>Analyse new games automatically</strong>
-        <span class="muted small">Every game imported by a sync is queued for analysis.</span>
-      </span>
-    </label>
+    <div class="toggles">
+      <label class="toggle">
+        <input type="checkbox" bind:checked={autoAnalyze} onchange={saveAuto} />
+        <span>
+          <strong>Analyse new games automatically</strong>
+          <span class="muted small">Every game imported by a sync is queued for analysis.</span>
+        </span>
+      </label>
+      <label class="toggle">
+        <input type="checkbox" bind:checked={moveSounds} onchange={saveSounds} />
+        <span>
+          <strong>Move sounds</strong>
+          <span class="muted small">Play a sound when stepping through a game. Press M in a review to toggle.</span>
+        </span>
+      </label>
+    </div>
   </Card>
 
   <Card title="Appearance">
@@ -96,6 +115,7 @@
 
 <style>
   .page { display: grid; gap: var(--sp-4); max-width: 860px; }
+  .toggles { display: grid; gap: var(--sp-4); }
   .toggle { display: flex; gap: var(--sp-3); align-items: flex-start; cursor: pointer; }
   .toggle input { accent-color: var(--accent); width: 16px; height: 16px; margin-top: 3px; }
   .toggle span { display: grid; }

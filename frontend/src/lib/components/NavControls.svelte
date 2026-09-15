@@ -5,9 +5,18 @@
   let {
     ply,
     total,
+    sound = true,
     onseek,
     onflip,
-  }: { ply: number; total: number; onseek: (ply: number) => void; onflip: () => void } = $props();
+    onsound,
+  }: {
+    ply: number;
+    total: number;
+    sound?: boolean;
+    onseek: (ply: number) => void;
+    onflip: () => void;
+    onsound?: (enabled: boolean) => void;
+  } = $props();
 </script>
 
 <div class="nav">
@@ -17,6 +26,11 @@
   <Button variant="ghost" size="sm" disabled={ply >= total} onclick={() => onseek(ply + 1)} title="Next (→)"><Icon name="chevron-right" size={16} /></Button>
   <Button variant="ghost" size="sm" disabled={ply >= total} onclick={() => onseek(total)} title="End (End)"><Icon name="last" size={16} /></Button>
   <span class="gap"></span>
+  {#if onsound}
+    <Button variant="ghost" size="sm" onclick={() => onsound(!sound)} title={sound ? 'Mute move sounds (M)' : 'Unmute move sounds (M)'}>
+      <Icon name={sound ? 'volume' : 'volume-off'} size={16} />
+    </Button>
+  {/if}
   <Button variant="ghost" size="sm" onclick={onflip} title="Flip board (F)"><Icon name="flip" size={16} /></Button>
 </div>
 
