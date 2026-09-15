@@ -125,9 +125,10 @@ Python 3.12+, [uv](https://docs.astral.sh/uv/), Node 22+.
 ```sh
 git clone https://github.com/tarekchaalan/local-chess-analyzer
 cd local-chess-analyzer
-(cd backend && uv sync && uv run fetch-stockfish)   # backend deps + Stockfish for this machine
-(cd frontend && npm install)                         # frontend deps
+./run.sh          # or run.cmd on Windows — does everything below on first run
 ```
+
+Manually, that is: `(cd backend && uv sync && uv run fetch-stockfish)` for backend deps + Stockfish, and `(cd frontend && npm install)` for frontend deps.
 
 Stockfish binaries are not committed. `fetch-stockfish` downloads the pinned official release (17.1, avx2 builds) for the current platform into `stockfish/` and verifies its sha256; `--platform all` fetches every platform, `--force` re-downloads. CI and the Docker image run the same script.
 
@@ -138,9 +139,11 @@ Stockfish binaries are not committed. `fetch-stockfish` downloads the pinned off
 **From source, one command**
 
 ```sh
-(cd frontend && npm run build)      # once, and after frontend changes
-cd backend && uv run lca            # serves API + UI on http://127.0.0.1:42069 and opens your browser
+./run.sh        # macOS / Linux
+run.cmd         # Windows (or .\run.ps1)
 ```
+
+Installs dependencies, fetches Stockfish if needed, builds the frontend and serves everything on http://127.0.0.1:42069, opening your browser. `--dev` / `-Dev` starts the hot-reload servers instead; `--no-build` / `-NoBuild` reuses the last frontend build.
 
 **Development** (hot reload)
 
