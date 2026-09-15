@@ -35,6 +35,8 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
+# FastAPI's `Depends()` in defaults is the framework idiom.
+extend-per-file-ignores = { "lca/api/*.py" = ["B008"] }
 
 [build-system]
 requires = ["hatchling"]
