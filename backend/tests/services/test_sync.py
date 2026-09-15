@@ -87,3 +87,24 @@ async def test_platform_errors_propagate(sf):
     platform.fail_with = PlatformError("upstream_error", "boom")
     with pytest.raises(PlatformError):
         await sync_account(sf, account_id, platform)
+
+
+async def test_cancel_keeps_imported_games_and_refreshes_count(sf):
+    from lca.services.sync import SyncCancelled
+
+    account_id = await _account(sf)
+    platform = FakePlatform("chesscom", chesscom_fixture_games(), {})
+    seen = {"n": 0}
+
+    def cancelled():
+        seen["n"] += 1
+        return seen["n"] > 2
+
+    with pytest.raises(SyncCancelled):
+        await sync_account(sf, account_id, platform, is_cancelled=cancelled)
+    async with sf() as s:
+        account = await s.get(Account, account_id)
+        games = (await s.execute(select(Game))).scalars().all()
+    assert 1 <= len(games) < 4
+    assert account.game_count == len(games)
+    assert account.last_synced_at is None

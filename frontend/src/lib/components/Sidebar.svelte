@@ -2,7 +2,7 @@
   import { isActive, router } from '$lib/router/routing.svelte';
   import Icon, { type IconName } from '$lib/ui/Icon.svelte';
   import JobsTray from './JobsTray.svelte';
-  import logo from '../../assets/logo.svg';
+  import Logo from '$lib/ui/Logo.svelte';
 
   let { onnavigate }: { onnavigate?: () => void } = $props();
 
@@ -16,7 +16,7 @@
 
 <aside class="sidebar">
   <a class="brand" href="#/" onclick={onnavigate}>
-    <img src={logo} alt="" width="28" height="28" />
+    <Logo size={28} />
     <span>Local Chess<br /><strong>Analyzer</strong></span>
   </a>
   <nav>

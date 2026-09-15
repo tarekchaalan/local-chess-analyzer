@@ -13,14 +13,16 @@
   import Icon from '$lib/ui/Icon.svelte';
   import NotFound from './routes/NotFound.svelte';
   import Placeholder from './routes/Placeholder.svelte';
+  import Accounts from './routes/Accounts.svelte';
+  import Setup from './routes/Setup.svelte';
 
   const routes = [
     { path: '/', component: Placeholder },
     { path: '/games', component: Placeholder },
     { path: '/games/:id', component: Placeholder },
-    { path: '/accounts', component: Placeholder },
+    { path: '/accounts', component: Accounts },
     { path: '/settings', component: Placeholder },
-    { path: '/setup', component: Placeholder },
+    { path: '/setup', component: Setup },
   ];
 
   let ready = $state(false);

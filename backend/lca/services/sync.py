@@ -93,7 +93,8 @@ async def _save_cursor(sf: SessionFactory, account_id: int, cursor: str | None) 
             await session.commit()
 
 
-async def _finish(sf: SessionFactory, account_id: int) -> Account:
+async def refresh_counts(sf: SessionFactory, account_id: int, *, completed: bool) -> Account:
+    """Recompute game_count; stamp last_synced_at only when the sync ran to completion."""
     async with sf() as session:
         account = await session.get(Account, account_id)
         assert account is not None
@@ -101,7 +102,8 @@ async def _finish(sf: SessionFactory, account_id: int) -> Account:
             select(func.count()).select_from(Game).where(Game.account_id == account_id)
         )
         account.game_count = int(count or 0)
-        account.last_synced_at = utcnow_iso()
+        if completed:
+            account.last_synced_at = utcnow_iso()
         await session.commit()
         await session.refresh(account)
         return account
@@ -146,50 +148,48 @@ async def sync_account(
             for gid in created:
                 await enqueue_analyze(gid)
 
-    while True:
-        try:
-            async for game, new_cursor in platform.fetch_games(
-                account.username, last_cursor, months=months
-            ):
-                if is_cancelled and is_cancelled():
-                    await flush()
-                    raise SyncCancelled()
-                fetched += 1
-                row = _game_row(account, game)
-                if row is not None:
-                    pending.append(row)
-                cursor_changed = new_cursor != last_cursor
-                if cursor_changed and total:
-                    archives_done += 1
-                if len(pending) >= BATCH or cursor_changed:
-                    await flush()
-                    last_cursor = new_cursor
-                    await _save_cursor(sf, account_id, last_cursor)
-                    if on_progress:
-                        msg = f"{fetched} games fetched, {created_total} new"
-                        await on_progress(archives_done if total else fetched, total, msg)
-            break
-        except PlatformError as e:
-            if e.code == "rate_limited" and retries < MAX_RATE_LIMIT_RETRIES:
-                retries += 1
-                wait = e.retry_after or 30.0
-                log.info("Rate limited by %s; waiting %.0fs", platform.name, wait)
-                if on_progress:
-                    await on_progress(
-                        archives_done if total else fetched,
-                        total,
-                        f"Rate limited, waiting {wait:.0f}s",
-                    )
-                await asyncio.sleep(wait)
-                continue
-            await flush()
-            raise
+    async def report(message: str) -> None:
+        if on_progress:
+            await on_progress(archives_done if total else fetched, total, message)
 
-    await flush()
-    if last_cursor is not None or cursor is None:
-        # chess.com: keep the last month so it gets re-read next time; lichess: createdAt+1
+    completed = False
+    try:
+        while True:
+            try:
+                async for game, new_cursor in platform.fetch_games(
+                    account.username, last_cursor, months=months
+                ):
+                    if is_cancelled and is_cancelled():
+                        raise SyncCancelled()
+                    fetched += 1
+                    row = _game_row(account, game)
+                    if row is not None:
+                        pending.append(row)
+                    cursor_changed = new_cursor != last_cursor
+                    if cursor_changed and total:
+                        archives_done += 1
+                    if len(pending) >= BATCH or cursor_changed:
+                        await flush()
+                        last_cursor = new_cursor
+                        await _save_cursor(sf, account_id, last_cursor)
+                        await report(f"{fetched} games fetched, {created_total} new")
+                break
+            except PlatformError as e:
+                if e.code == "rate_limited" and retries < MAX_RATE_LIMIT_RETRIES:
+                    retries += 1
+                    wait = e.retry_after or 30.0
+                    log.info("Rate limited by %s; waiting %.0fs", platform.name, wait)
+                    await report(f"Rate limited, waiting {wait:.0f}s")
+                    await asyncio.sleep(wait)
+                    continue
+                raise
+        await flush()
         await _save_cursor(sf, account_id, last_cursor)
-    await _finish(sf, account_id)
-    if on_progress:
-        await on_progress(total or fetched, total or fetched, f"{created_total} new games")
+        completed = True
+    finally:
+        # Keep whatever was imported, even on cancel or failure.
+        await flush()
+        await refresh_counts(sf, account_id, completed=completed)
+
+    await report(f"{created_total} new games")
     return {"fetched": fetched, "created": created_total}

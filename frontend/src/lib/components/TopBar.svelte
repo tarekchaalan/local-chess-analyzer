@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from '$lib/ui/Icon.svelte';
   import { jobs } from '$lib/stores/jobs.svelte';
-  import logo from '../../assets/logo.svg';
+  import Logo from '$lib/ui/Logo.svelte';
 
   let { onmenu }: { onmenu: () => void } = $props();
   const active = $derived(jobs.active.length);
@@ -9,7 +9,7 @@
 
 <header class="topbar">
   <button class="menu" onclick={onmenu} aria-label="Open menu"><Icon name="menu" /></button>
-  <a class="brand" href="#/"><img src={logo} alt="" width="22" height="22" /> Local Chess Analyzer</a>
+  <a class="brand" href="#/"><Logo size={22} /> Local Chess Analyzer</a>
   {#if active > 0}<span class="pill">{active} job{active === 1 ? '' : 's'}</span>{/if}
 </header>
 
