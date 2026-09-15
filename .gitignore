@@ -70,3 +70,7 @@ backend/.venv/
 backend/__pycache__/
 data/*.db-*
 data/lca.*
+
+# Stockfish binaries are fetched, not committed: `cd backend && uv run fetch-stockfish`
+stockfish/stockfish_*
+stockfish/.stockfish_*.sha256

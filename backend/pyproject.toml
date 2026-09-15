@@ -16,6 +16,9 @@ dependencies = [
   "sse-starlette>=2.1",
 ]
 
+[project.scripts]
+fetch-stockfish = "lca.tools.fetch_stockfish:main"
+
 [dependency-groups]
 dev = [
   "pytest>=8",

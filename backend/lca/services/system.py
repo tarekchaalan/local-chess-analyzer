@@ -71,6 +71,11 @@ async def system_info(engine_path: str, *, bundled_path: str, custom_path: str) 
     engine.bundled_path = bundled_path
     engine.custom_path = custom_path or None
     engine.is_bundled = engine_path == bundled_path
+    if engine.is_bundled and not engine.exists:
+        engine.message = (
+            "Bundled Stockfish is missing. In a dev checkout run "
+            "`cd backend && uv run fetch-stockfish`; in the desktop app, reinstall."
+        )
     return SystemOut(
         cpu=cpu,
         memory=memory_info(),

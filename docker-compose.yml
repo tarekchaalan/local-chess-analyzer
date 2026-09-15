@@ -6,7 +6,6 @@ services:
     hostname: backend
     volumes:
       - ./data:/app/data
-      - ./stockfish:/app/stockfish
     restart: unless-stopped
     ports:
       - "42069:42069"

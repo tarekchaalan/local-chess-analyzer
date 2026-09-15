@@ -107,7 +107,7 @@ backend/tests/        pytest suite with recorded API fixtures
 frontend/src/         Svelte 5 + TypeScript SPA (no router/chart/CSS frameworks)
   lib/{router,api,stores,chess,ui,components,icons}
   routes/             Dashboard, Games, GameReview, Accounts, Settings, Setup
-stockfish/            engine binaries per platform (GPL-3.0, see Copying.txt)
+stockfish/            engine binaries, fetched by `uv run fetch-stockfish` (GPL-3.0, see Copying.txt)
 pyinstaller.spec      desktop bundle build; .github/workflows/release.yml publishes it
 docs/superpowers/     design spec and implementation plan for v2
 ```
@@ -118,16 +118,18 @@ docs/superpowers/     design spec and implementation plan for v2
 
 ### Prerequisites
 
-Python 3.12+, [uv](https://docs.astral.sh/uv/), Node 22+. Stockfish binaries for every platform are bundled in `stockfish/`.
+Python 3.12+, [uv](https://docs.astral.sh/uv/), Node 22+.
 
 ### Installation
 
 ```sh
 git clone https://github.com/tarekchaalan/local-chess-analyzer
 cd local-chess-analyzer
-(cd backend && uv sync)          # backend deps into backend/.venv
-(cd frontend && npm install)     # frontend deps
+(cd backend && uv sync && uv run fetch-stockfish)   # backend deps + Stockfish for this machine
+(cd frontend && npm install)                         # frontend deps
 ```
+
+Stockfish binaries are not committed. `fetch-stockfish` downloads the pinned official release (17.1, avx2 builds) for the current platform into `stockfish/` and verifies its sha256; `--platform all` fetches every platform, `--force` re-downloads. CI and the Docker image run the same script.
 
 ### Usage
 

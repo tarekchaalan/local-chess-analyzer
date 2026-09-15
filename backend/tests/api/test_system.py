@@ -5,6 +5,7 @@ async def test_system_info(client):
     assert body["cpu"]["logical_cores"] >= 1
     assert body["memory"]["recommended_hash_mb"] >= 128
     assert body["engine"]["valid"] is False  # no binary in the temp base dir
+    assert "fetch-stockfish" in body["engine"]["message"]
     assert body["recommended_depth"] in (15, 18, 20)
 
 

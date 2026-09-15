@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import platform
 import sys
 from dataclasses import dataclass
@@ -30,13 +31,20 @@ def _platform_key() -> tuple[str, str]:
 
 @dataclass(frozen=True)
 class Paths:
-    """Resolves runtime directories. `base` overrides auto-detection (used by tests)."""
+    """Resolves runtime directories.
+
+    Resolution order for the base: explicit `base` (tests) > `LCA_BASE_DIR` env (Docker) >
+    the executable's folder when frozen (desktop bundle) > the repository root (dev).
+    """
 
     base: Path | None = None
 
     def base_dir(self) -> Path:
         if self.base is not None:
             return self.base
+        env = os.environ.get("LCA_BASE_DIR")
+        if env:
+            return Path(env)
         if getattr(sys, "frozen", False):
             return Path(sys.executable).parent
         # backend/lca/config.py -> backend/lca -> backend -> repo root
