@@ -65,12 +65,16 @@ def recommended_depth(threads: int) -> int:
     return 15
 
 
-async def system_info(engine_path: str) -> SystemOut:
+async def system_info(engine_path: str, *, bundled_path: str, custom_path: str) -> SystemOut:
     cpu = cpu_info()
+    engine = await validate_engine(engine_path)
+    engine.bundled_path = bundled_path
+    engine.custom_path = custom_path or None
+    engine.is_bundled = engine_path == bundled_path
     return SystemOut(
         cpu=cpu,
         memory=memory_info(),
-        engine=await validate_engine(engine_path),
+        engine=engine,
         recommended_depth=recommended_depth(cpu.recommended_threads),
         platform=f"{platform.system()} {platform.machine()}",
     )

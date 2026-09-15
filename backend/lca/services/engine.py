@@ -141,7 +141,7 @@ class EngineProvider:
             if self._session is None:
                 s = await self._settings.get_all()
                 self._session = EngineSession(
-                    s["engine_path"],
+                    await self._settings.engine_path(),
                     threads=int(s["engine_threads"]),
                     hash_mb=int(s["engine_hash_mb"]),
                     depth=int(s["analysis_depth"]),

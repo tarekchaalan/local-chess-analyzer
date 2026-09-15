@@ -12,7 +12,11 @@ router = APIRouter(prefix="/system", tags=["system"])
 
 @router.get("", response_model=SystemOut)
 async def get_system(settings: SettingsService = Depends(get_settings)) -> SystemOut:
-    return await system_info(await settings.get("engine_path"))
+    return await system_info(
+        await settings.engine_path(),
+        bundled_path=settings.bundled_engine_path(),
+        custom_path=await settings.get("engine_path"),
+    )
 
 
 @router.post("/engine/validate", response_model=EngineInfo)

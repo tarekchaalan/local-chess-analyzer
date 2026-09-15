@@ -74,5 +74,7 @@ async def test_delete_cascades_games(client):
     ).json()
     job = (await client.post(f"/api/accounts/{acc['id']}/sync")).json()
     await wait_for_job(client, job["id"])
+    assert (await client.get("/api/games")).json()["total"] == 4
     assert (await client.delete(f"/api/accounts/{acc['id']}")).status_code == 204
     assert (await client.get("/api/accounts")).json() == []
+    assert (await client.get("/api/games")).json()["total"] == 0

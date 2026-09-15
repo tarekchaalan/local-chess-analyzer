@@ -42,7 +42,7 @@
   async function validate() {
     validating = true;
     try {
-      validation = await api.validateEngine(path);
+      validation = await api.validateEngine(path.trim() || (sys?.engine.bundled_path ?? ''));
     } catch (e) {
       toasts.error(errorMessage(e));
     } finally {
@@ -91,11 +91,23 @@
 
   {#if showPath}
     <div class="path">
-      <Input label="Stockfish binary" bind:value={path} mono hint="Bundled Stockfish is auto-detected. Point this at another UCI engine to use it instead." />
+      <Input
+        label="Engine binary"
+        bind:value={path}
+        mono
+        placeholder={sys?.engine.bundled_path ? `Bundled: ${sys.engine.bundled_path}` : 'Bundled Stockfish'}
+        hint="Leave empty to use the bundled Stockfish. Point this at another UCI engine to use it instead."
+      />
       <div class="validate">
         <Button size="sm" onclick={validate} loading={validating}>Validate</Button>
+        {#if path.trim()}
+          <Button size="sm" variant="ghost" onclick={() => { path = ''; validate(); }}>Use bundled</Button>
+        {/if}
         {#if validation}
           <Badge tone={validation.valid ? 'success' : 'danger'}>{validation.valid ? validation.name : validation.message}</Badge>
+        {/if}
+        {#if sys?.engine.custom_path && sys.engine.is_bundled}
+          <Badge tone="warning">Custom path not found — using bundled engine</Badge>
         {/if}
       </div>
     </div>

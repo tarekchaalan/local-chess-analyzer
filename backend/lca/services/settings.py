@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 
 import psutil
 from sqlalchemy import select
@@ -71,7 +72,8 @@ def recommended_hash_mb() -> int:
 
 
 SPECS: dict[str, SettingSpec] = {
-    "engine_path": SettingSpec(lambda p: str(p.default_engine_path()), _text(1024)),
+    # Empty means "the bundled Stockfish", resolved at runtime so the library can move.
+    "engine_path": SettingSpec(lambda _: "", _text(1024)),
     "engine_threads": SettingSpec(lambda _: str(recommended_threads()), _int_in(1, 128)),
     "engine_hash_mb": SettingSpec(lambda _: str(recommended_hash_mb()), _int_in(16, 16384)),
     "analysis_depth": SettingSpec(lambda _: "18", _int_in(1, 60)),
@@ -111,6 +113,16 @@ class SettingsService:
     async def get_bool(self, key: str) -> bool:
         return (await self.get(key)) == "true"
 
+    def bundled_engine_path(self) -> str:
+        return str(self._paths.default_engine_path())
+
+    async def engine_path(self) -> str:
+        """The engine to run: a custom path if set and present, else the bundled binary."""
+        custom = (await self.get("engine_path")).strip()
+        if custom and Path(custom).exists():
+            return custom
+        return self.bundled_engine_path()
+
     async def update(self, values: dict[str, object]) -> list[str]:
         """Validate and persist. Returns the keys that were written."""
         normalized: dict[str, str] = {}
@@ -126,6 +138,8 @@ class SettingsService:
                 errors[key] = str(e)
         if errors:
             raise SettingsValidationError(errors)
+        if normalized.get("engine_path", None) == self.bundled_engine_path():
+            normalized["engine_path"] = ""
         if not normalized:
             return []
         async with self._sf() as session:

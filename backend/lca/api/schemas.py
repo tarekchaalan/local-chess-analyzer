@@ -205,6 +205,9 @@ class EngineInfo(BaseModel):
     valid: bool
     name: str | None
     message: str
+    bundled_path: str | None = None
+    custom_path: str | None = None
+    is_bundled: bool = True
 
 
 class SystemOut(BaseModel):

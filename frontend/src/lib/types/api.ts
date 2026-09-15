@@ -197,6 +197,9 @@ export interface EngineInfo {
   valid: boolean;
   name: string | null;
   message: string;
+  bundled_path?: string | null;
+  custom_path?: string | null;
+  is_bundled?: boolean;
 }
 
 export interface SystemInfo {

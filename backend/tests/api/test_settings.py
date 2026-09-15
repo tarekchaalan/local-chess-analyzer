@@ -28,3 +28,19 @@ async def test_engine_settings_invalidate_session(client, app):
     n = len(app.state.engines.invalidated)
     await client.patch("/api/settings", json={"theme": "light"})
     assert len(app.state.engines.invalidated) == n
+
+
+async def test_engine_path_empty_means_bundled(client, app):
+    s = (await client.get("/api/settings")).json()
+    assert s["engine_path"] == ""
+    bundled = app.state.settings.bundled_engine_path()
+    # saving the bundled path explicitly is normalised back to ""
+    r = await client.patch("/api/settings", json={"engine_path": bundled})
+    assert r.json()["settings"]["engine_path"] == ""
+    assert await app.state.settings.engine_path() == bundled
+    # a custom path that does not exist falls back to the bundled binary
+    await client.patch("/api/settings", json={"engine_path": "/nope/stockfish"})
+    assert await app.state.settings.engine_path() == bundled
+    sysinfo = (await client.get("/api/system")).json()
+    assert sysinfo["engine"]["custom_path"] == "/nope/stockfish"
+    assert sysinfo["engine"]["is_bundled"] is True

@@ -184,11 +184,8 @@
 
     <div class="layout">
       <section class="left">
-        <div class="boardrow">
-          {#if analysis}
-            <div class="evalbar"><EvalBar value={evalNow} {orientation} /></div>
-          {/if}
-          <div class="boardcol">
+        <div class="stage" class:with-eval={!!analysis}>
+          <div class="top">
             <PlayerRow
               name={orientation === 'w' ? game.black : game.white}
               rating={orientation === 'w' ? game.black_rating : game.white_rating}
@@ -198,7 +195,14 @@
               isUser={game.user_color !== orientation}
               accuracy={analysis ? (orientation === 'w' ? analysis.accuracy_black : analysis.accuracy_white) : null}
             />
+          </div>
+          {#if analysis}
+            <div class="eval"><EvalBar value={evalNow} {orientation} /></div>
+          {/if}
+          <div class="board">
             <Board {fen} {orientation} {lastMove} {check} bestMove={bestArrow} {marker} />
+          </div>
+          <div class="bottom">
             <PlayerRow
               name={orientation === 'w' ? game.white : game.black}
               rating={orientation === 'w' ? game.white_rating : game.black_rating}
@@ -208,6 +212,8 @@
               isUser={game.user_color === orientation}
               accuracy={analysis ? (orientation === 'w' ? analysis.accuracy_white : analysis.accuracy_black) : null}
             />
+          </div>
+          <div class="nav">
             <NavControls {ply} {total} onseek={seek} onflip={() => (orientation = orientation === 'w' ? 'b' : 'w')} />
           </div>
         </div>
@@ -259,32 +265,57 @@
 </div>
 
 <style>
-  .review { display: grid; gap: var(--sp-4); }
+  .review { display: grid; gap: var(--sp-3); }
   .head { display: grid; grid-template-columns: auto 1fr auto; gap: var(--sp-4); align-items: center; }
   .back { display: inline-flex; align-items: center; gap: 2px; font-size: var(--fs-sm); }
   .title h1 { font-size: var(--fs-xl); }
   .meta { font-size: var(--fs-xs); display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
   .res { font-weight: 600; color: var(--text); }
   .actions { display: flex; align-items: center; gap: var(--sp-2); }
+
+  /* Board is the hero: it takes all the width it can, capped by the viewport height. */
   .layout {
     display: grid;
-    grid-template-columns: minmax(320px, 600px) minmax(320px, 1fr);
+    grid-template-columns: minmax(0, 1fr) 380px;
     gap: var(--sp-4);
     align-items: start;
   }
-  .boardrow { display: flex; gap: var(--sp-2); }
-  .evalbar { width: 22px; flex: none; padding: 34px 0 78px; display: flex; }
-  .boardcol { flex: 1; min-width: 0; display: grid; gap: 4px; }
+  .left { min-width: 0; display: grid; justify-items: center; }
+  .stage {
+    --chrome: 250px; /* header + player rows + nav + page padding */
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-areas: "top" "board" "bottom" "nav";
+    row-gap: 4px;
+    column-gap: var(--sp-2);
+    width: min(100%, calc(100vh - var(--chrome)));
+  }
+  .stage.with-eval {
+    grid-template-columns: 22px minmax(0, 1fr);
+    grid-template-areas: ". top" "eval board" ". bottom" ". nav";
+    width: min(100%, calc(100vh - var(--chrome) + 30px));
+  }
+  .top { grid-area: top; }
+  .eval { grid-area: eval; display: flex; }
+  .board { grid-area: board; min-width: 0; }
+  .bottom { grid-area: bottom; }
+  .nav { grid-area: nav; }
+
   .right { display: grid; gap: var(--sp-3); min-width: 0; }
   .pad { padding: var(--sp-3); }
-  .right :global(.moves) { max-height: 320px; display: flex; }
+  .right :global(.moves) { max-height: 42vh; display: flex; }
   .right :global(.moves .body) { flex: 1; min-height: 0; display: flex; }
   .right :global(.moves .list) { flex: 1; }
   .analyzing { display: grid; gap: var(--sp-3); }
   .row { display: flex; align-items: center; gap: 8px; }
   .small { font-size: var(--fs-xs); }
-  @media (max-width: 1000px) {
+  @media (max-width: 1100px) {
+    .layout { grid-template-columns: minmax(0, 1fr) 340px; }
+  }
+  @media (max-width: 900px) {
     .layout { grid-template-columns: 1fr; }
     .head { grid-template-columns: 1fr; gap: var(--sp-2); }
+    .stage, .stage.with-eval { width: 100%; }
   }
 </style>
